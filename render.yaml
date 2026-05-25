@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: edunexus
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false   # You'll paste this in the Render dashboard
+    disk:
+      name: edunexus-data
+      mountPath: /opt/render/project/src/instance
+      sizeGB: 1
