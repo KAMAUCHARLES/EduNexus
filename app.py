@@ -10,6 +10,10 @@ from functools import wraps
 import random, os, uuid
 import pdfkit
 from groq import Groq
+import logging
+
+# ── LOGGING ──────────────────────────────────────────────────────────────────
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'edunexus-super-secret-2024'
@@ -1502,6 +1506,14 @@ def download_pdf():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'PDF generation failed: {str(e)}'}), 500
+
+
+# ── GLOBAL ERROR HANDLER ──────────────────────────────────────────────────────
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    traceback.print_exc()
+    return f"Internal Server Error:<br><pre>{str(e)}</pre>", 500
 
 
 # ── SEED DATABASE ─────────────────────────────────────────────────────────────
