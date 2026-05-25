@@ -1371,6 +1371,8 @@ If subject, grade, topic, or duration is missing — ask for it politely before 
 
 
 # ── PDF DOWNLOAD (wkhtmltopdf) ──────────────────────────────────────────────
+from flask import url_for  # add to imports
+
 @app.route('/download-pdf', methods=['POST'])
 @login_required
 def download_pdf():
@@ -1379,7 +1381,7 @@ def download_pdf():
         if not data:
             return jsonify({'error': 'No data received'}), 400
 
-        # Extract data
+        # Extract data (same as before)
         task = data.get('task', 'Document')
         subject = data.get('subject', '')
         grade = data.get('grade', '')
@@ -1396,14 +1398,10 @@ def download_pdf():
 
         # Document title
         title_parts = []
-        if task:
-            title_parts.append(task.replace('_', ' ').title())
-        if subject:
-            title_parts.append(subject)
-        if grade:
-            title_parts.append(f"({grade})")
-        if topic:
-            title_parts.append(f"– {topic}")
+        if task: title_parts.append(task.replace('_', ' ').title())
+        if subject: title_parts.append(subject)
+        if grade: title_parts.append(f"({grade})")
+        if topic: title_parts.append(f"– {topic}")
         doc_title = " ".join(title_parts) if title_parts else "AI Generated Document"
 
         # School info
@@ -1415,9 +1413,8 @@ def download_pdf():
         school_motto = school.motto if school and school.motto else "Excellence Through Innovation"
         current_date = datetime.now().strftime("%d %B %Y")
 
-        # Logo URL (optional, if file exists)
-        base_url = request.host_url.rstrip('/')
-        logo_url = f"{base_url}/media/logo.png"
+        # Logo – absolute URL (works on Render)
+        logo_url = url_for('serve_media', filename='logo.png', _external=True)
 
         # Render HTML template
         rendered_html = render_template(
@@ -1433,7 +1430,7 @@ def download_pdf():
             content_html=content_html
         )
 
-        # Generate PDF using WeasyPrint
+        # Generate PDF with WeasyPrint
         pdf_output = HTML(string=rendered_html).write_pdf()
 
         if not pdf_output or len(pdf_output) < 1000:
@@ -1444,7 +1441,6 @@ def download_pdf():
         safe_title = safe_title.replace(" ", "_").replace("/", "_")[:50]
         filename = f"{safe_title}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
-        # Return PDF response
         response = make_response(pdf_output)
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
