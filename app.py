@@ -1367,76 +1367,159 @@ If subject, grade, topic, or duration is missing — ask for it politely before 
 
 
 # ── PDF DOWNLOAD (wkhtmltopdf) ──────────────────────────────────────────────
+from flask import (
+    render_template,
+    request,
+    jsonify,
+    make_response,
+    send_from_directory
+)
 
-from flask import make_response, send_from_directory
 from datetime import datetime
 import unicodedata
 import pdfkit
 import traceback
 import re
 import markdown
+import tempfile
+import os
+
+# =========================
+# WKHTMLTOPDF CONFIG
+# =========================
+
+if os.name == 'nt':
+    pdfkit_config = pdfkit.configuration(
+        wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+    )
+else:
+    pdfkit_config = pdfkit.configuration(
+        wkhtmltopdf='/usr/bin/wkhtmltopdf'
+    )
+
+
+@app.route('/media/<path:filename>')
+def serve_media(filename):
+    return send_from_directory('media', filename)
+
 
 @app.route('/download-pdf', methods=['POST'])
 @login_required
 def download_pdf():
+
     try:
+
         data = request.get_json()
+
         if not data:
-            return jsonify({'error': 'No data received'}), 400
+            return jsonify({
+                'error': 'No data received'
+            }), 400
 
         # =========================
         # REQUEST DATA
         # =========================
+
         task = data.get('task', 'Document')
         subject = data.get('subject', '')
         grade = data.get('grade', '')
         topic = data.get('topic', '')
+
         content_md = data.get('content', '')
 
         # =========================
         # CLEAN MARKDOWN
         # =========================
-        content_md = content_md.replace('\\*', '*').replace('\\_', '_')
+
+        content_md = content_md.replace('\\*', '*')
+        content_md = content_md.replace('\\_', '_')
+
         content_html = markdown.markdown(
             content_md,
-            extensions=['extra', 'nl2br', 'sane_lists', 'codehilite', 'toc']
+            extensions=[
+                'extra',
+                'nl2br',
+                'sane_lists',
+                'codehilite',
+                'toc'
+            ]
         )
+
         content_html = re.sub(r'<p>\s*</p>', '', content_html)
 
         # =========================
-        # TITLE
+        # DOCUMENT TITLE
         # =========================
+
         title_parts = []
+
         if task:
             title_parts.append(task.replace('_', ' ').title())
+
         if subject:
             title_parts.append(subject)
+
         if grade:
             title_parts.append(f"({grade})")
+
         if topic:
             title_parts.append(f"– {topic}")
-        doc_title = " ".join(title_parts) if title_parts else "AI Generated Document"
+
+        doc_title = (
+            " ".join(title_parts)
+            if title_parts
+            else "AI Generated Document"
+        )
 
         # =========================
         # SCHOOL INFO
         # =========================
+
         school = School.query.first()
-        school_name = school.name if school else "ST. TERESA CHILDREN LEARNING CENTRE"
-        school_address = school.address if school and school.address else "P.O BOX 1077 – 20300, NYAHURURU"
-        school_phone = school.phone if school and school.phone else "0706 747 155"
-        school_email = school.email if school and school.email else "stteresa699@gmail.com"
-        school_motto = school.motto if school and school.motto else "Excellence Through Innovation"
+
+        school_name = (
+            school.name
+            if school else
+            "ST. TERESA CHILDREN LEARNING CENTRE"
+        )
+
+        school_address = (
+            school.address
+            if school and school.address else
+            "P.O BOX 1077 – 20300, NYAHURURU"
+        )
+
+        school_phone = (
+            school.phone
+            if school and school.phone else
+            "0706 747 155"
+        )
+
+        school_email = (
+            school.email
+            if school and school.email else
+            "stteresa699@gmail.com"
+        )
+
+        school_motto = (
+            school.motto
+            if school and school.motto else
+            "Excellence Through Innovation"
+        )
+
         current_date = datetime.now().strftime("%d %B %Y")
 
         # =========================
-        # LOGO
+        # LOGO URL
         # =========================
+
         base_url = request.host_url.rstrip('/')
         logo_url = f"{base_url}/media/logo.png"
 
         # =========================
-        # RENDER HTML
+        # RENDER HTML TEMPLATE
         # =========================
+
         rendered_html = render_template(
             'pdf_template.html',
             doc_title=doc_title,
@@ -1451,44 +1534,116 @@ def download_pdf():
         )
 
         # =========================
-        # PDF OPTIONS (SAFE WKHTMLTOPDF CONFIG)
+        # PDF OPTIONS
         # =========================
+
         options = {
             'quiet': '',
             'enable-local-file-access': None,
             'page-size': 'A4',
             'encoding': 'UTF-8',
+
             'margin-top': '18mm',
             'margin-bottom': '20mm',
             'margin-left': '15mm',
             'margin-right': '15mm',
+
             'print-media-type': '',
             'enable-smart-shrinking': '',
+            'dpi': 300,
+
+            # FOOTER
             'footer-center': 'Page [page] of [topage]',
-            'footer-font-size': 9,
-            'footer-font-name': 'Arial',
-            'footer-spacing': 5,
+            'footer-font-size': '9',
+            'footer-font-name': 'Times New Roman',
+            'footer-spacing': '5',
+            'footer-line': '',
+
+            # STABILITY
+            'no-stop-slow-scripts': '',
         }
 
         # =========================
-        # GENERATE PDF
+        # GENERATE PDF SAFELY
         # =========================
-        if pdfkit_config:
-            pdf_output = pdfkit.from_string(
+
+        with tempfile.NamedTemporaryFile(
+            suffix=".pdf",
+            delete=False
+        ) as pdf_file:
+
+            pdf_path = pdf_file.name
+
+            pdfkit.from_string(
                 rendered_html,
-                False,
+                pdf_path,
                 configuration=pdfkit_config,
                 options=options
             )
-        else:
-            pdf_output = pdfkit.from_string(
-                rendered_html,
-                False,
-                options=options
-            )
 
-        if not pdf_output:
-            return jsonify({'error': 'PDF generation failed'}), 500
+        # =========================
+        # READ GENERATED PDF
+        # =========================
+
+        with open(pdf_path, "rb") as f:
+            pdf_output = f.read()
+
+        # DELETE TEMP FILE
+        os.unlink(pdf_path)
+
+        # =========================
+        # VALIDATE PDF
+        # =========================
+
+        if not pdf_output or len(pdf_output) < 1000:
+            return jsonify({
+                'error': 'PDF generation failed'
+            }), 500
+
+        # =========================
+        # SAFE FILE NAME
+        # =========================
+
+        safe_title = unicodedata.normalize(
+            'NFKD',
+            doc_title
+        ).encode(
+            'ascii',
+            'ignore'
+        ).decode('ascii')
+
+        safe_title = (
+            safe_title
+            .replace(" ", "_")
+            .replace("/", "_")
+        )[:50]
+
+        filename = (
+            f"{safe_title}_"
+            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        )
+
+        # =========================
+        # RETURN PDF RESPONSE
+        # =========================
+
+        response = make_response(pdf_output)
+
+        response.headers['Content-Type'] = 'application/pdf'
+
+        response.headers['Content-Disposition'] = (
+            f'attachment; filename="{filename}"'
+        )
+
+        return response
+
+    except Exception as e:
+
+        traceback.print_exc()
+
+        return jsonify({
+            'error': f'PDF generation failed: {str(e)}'
+        }), 500
 
         # =========================
         # SAFE FILENAME
