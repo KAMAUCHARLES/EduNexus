@@ -10,9 +10,9 @@
             size: A4;
             margin: 25mm 15mm 20mm 15mm;
 
-            /* Page number at bottom right */
-            @bottom-right {
-                content: "Page " counter(page);
+            /* Centered page number with "Page X of Y" */
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
                 font-family: Arial, sans-serif;
                 font-size: 9pt;
                 color: #7a0019;
