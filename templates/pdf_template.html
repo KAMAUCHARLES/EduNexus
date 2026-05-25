@@ -49,26 +49,6 @@
             z-index: 2;
         }
 
-        /* ================= WATERMARK (VISIBLE) ================= */
-        .watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 120px;
-            font-weight: 900;
-            color: #7a0019;          /* solid school colour */
-            opacity: 0.2;            /* 20% – clearly visible but not overpowering */
-            z-index: 0;
-            white-space: nowrap;
-            pointer-events: none;
-            width: 140%;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-        }
-
         /* ================= HEADER ================= */
         .header {
             border-bottom: 4px solid #7a0019;
@@ -286,11 +266,6 @@
 </head>
 
 <body>
-
-<!-- WATERMARK (now clearly visible) -->
-<div class="watermark">
-    {{ school_name }}
-</div>
 
 <div class="page">
 
