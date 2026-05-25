@@ -9,6 +9,14 @@
         @page {
             size: A4;
             margin: 25mm 15mm 20mm 15mm;
+
+            /* Page number at bottom right */
+            @bottom-right {
+                content: "Page " counter(page);
+                font-family: Arial, sans-serif;
+                font-size: 9pt;
+                color: #7a0019;
+            }
         }
 
         /* ================= GLOBAL ================= */
@@ -60,17 +68,6 @@
             text-transform: uppercase;
         }
 
-        /* ================= PAGE NUMBER ================= */
-        .page-number {
-            position: fixed;
-            bottom: 5mm;
-            right: 10mm;
-            font-size: 9pt;
-            color: #7a0019;
-            font-family: Arial, sans-serif;
-            z-index: 999;
-        }
-
         /* ================= HEADER ================= */
         .header {
             border-bottom: 4px solid #7a0019;
@@ -103,7 +100,7 @@
         }
 
         .school-name {
-            font-size: 24px;          /* REDUCED from 34px */
+            font-size: 24px;
             font-weight: bold;
             color: #7a0019;
             text-transform: uppercase;
@@ -115,7 +112,7 @@
 
         .school-details {
             margin-top: 8px;
-            font-size: 11px;          /* slightly smaller to match */
+            font-size: 11px;
             line-height: 1.6;
             color: #333;
             font-weight: 500;
