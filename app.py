@@ -8,13 +8,21 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, date, timedelta
 from functools import wraps
 import random, os, uuid
-from weasyprint import HTML as WeasyHTML
+import pdfkit
 from groq import Groq
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'edunexus-super-secret-2024'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///edunexus.db'
 
+# ── PDFKIT CONFIGURATION (wkhtmltopdf) ──────────────────────────────────────
+# For local Windows development:
+WKHTMLTOPDF_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+if os.path.exists(WKHTMLTOPDF_PATH):
+    pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+else:
+    # For PythonAnywhere or other Linux environments where wkhtmltopdf is in PATH
+    pdfkit_config = None
 
 # ── FILE UPLOAD CONFIG ──────────────────────────────────────────────────────
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
@@ -290,8 +298,6 @@ app.jinja_env.globals.update(current_user=current_user, is_superadmin=is_superad
                               is_super_or_admin=is_super_or_admin, date=date)
 
 # ── AUTH ──────────────────────────────────────────────────────────────────────
-import os
-
 @app.route('/media/<path:filename>')
 def serve_media(filename):
     # This ensures it works on both local and PythonAnywhere
@@ -1356,39 +1362,21 @@ If subject, grade, topic, or duration is missing — ask for it politely before 
         return jsonify({'error': str(e)}), 500
 
 
-# ── PDF DOWNLOAD (WeasyPrint) ────────────────────────────────────────────────
+# ── PDF DOWNLOAD (wkhtmltopdf) ──────────────────────────────────────────────
 
-        # =========================
-# PDF DOWNLOAD ROUTE
-# =========================
-
-from flask import (
-    render_template,
-    request,
-    jsonify,
-    make_response,
-    send_from_directory
-)
-
+from flask import make_response, send_from_directory
 from datetime import datetime
 import unicodedata
+import pdfkit
 import traceback
 import re
 import markdown
 
-
-@app.route('/media/<path:filename>')
-def serve_media(filename):
-    return send_from_directory('media', filename)
-
-
 @app.route('/download-pdf', methods=['POST'])
 @login_required
 def download_pdf():
-
     try:
         data = request.get_json()
-
         if not data:
             return jsonify({'error': 'No data received'}), 400
 
@@ -1405,19 +1393,16 @@ def download_pdf():
         # CLEAN MARKDOWN
         # =========================
         content_md = content_md.replace('\\*', '*').replace('\\_', '_')
-
         content_html = markdown.markdown(
             content_md,
             extensions=['extra', 'nl2br', 'sane_lists', 'codehilite', 'toc']
         )
-
         content_html = re.sub(r'<p>\s*</p>', '', content_html)
 
         # =========================
         # TITLE
         # =========================
         title_parts = []
-
         if task:
             title_parts.append(task.replace('_', ' ').title())
         if subject:
@@ -1426,20 +1411,17 @@ def download_pdf():
             title_parts.append(f"({grade})")
         if topic:
             title_parts.append(f"– {topic}")
-
         doc_title = " ".join(title_parts) if title_parts else "AI Generated Document"
 
         # =========================
         # SCHOOL INFO
         # =========================
         school = School.query.first()
-
         school_name = school.name if school else "ST. TERESA CHILDREN LEARNING CENTRE"
         school_address = school.address if school and school.address else "P.O BOX 1077 – 20300, NYAHURURU"
         school_phone = school.phone if school and school.phone else "0706 747 155"
         school_email = school.email if school and school.email else "stteresa699@gmail.com"
         school_motto = school.motto if school and school.motto else "Excellence Through Innovation"
-
         current_date = datetime.now().strftime("%d %B %Y")
 
         # =========================
@@ -1465,12 +1447,41 @@ def download_pdf():
         )
 
         # =========================
-        # GENERATE PDF (WeasyPrint — no system binary needed)
+        # PDF OPTIONS (SAFE WKHTMLTOPDF CONFIG)
         # =========================
-        pdf_output = WeasyHTML(
-            string=rendered_html,
-            base_url=request.host_url
-        ).write_pdf()
+        options = {
+            'quiet': '',
+            'enable-local-file-access': None,
+            'page-size': 'A4',
+            'encoding': 'UTF-8',
+            'margin-top': '18mm',
+            'margin-bottom': '20mm',
+            'margin-left': '15mm',
+            'margin-right': '15mm',
+            'print-media-type': '',
+            'enable-smart-shrinking': '',
+            'footer-center': 'Page [page] of [topage]',
+            'footer-font-size': 9,
+            'footer-font-name': 'Arial',
+            'footer-spacing': 5,
+        }
+
+        # =========================
+        # GENERATE PDF
+        # =========================
+        if pdfkit_config:
+            pdf_output = pdfkit.from_string(
+                rendered_html,
+                False,
+                configuration=pdfkit_config,
+                options=options
+            )
+        else:
+            pdf_output = pdfkit.from_string(
+                rendered_html,
+                False,
+                options=options
+            )
 
         if not pdf_output:
             return jsonify({'error': 'PDF generation failed'}), 500
@@ -1480,68 +1491,18 @@ def download_pdf():
         # =========================
         safe_title = unicodedata.normalize('NFKD', doc_title)\
             .encode('ascii', 'ignore').decode('ascii')
-
         safe_title = safe_title.replace(" ", "_").replace("/", "_")[:50]
-
         filename = f"{safe_title}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
         response = make_response(pdf_output)
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-
         return response
 
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'PDF generation failed: {str(e)}'}), 500
 
-    
-        # =========================
-        # SAFE FILENAME
-        # =========================
-
-        safe_title = unicodedata.normalize(
-            'NFKD',
-            doc_title
-        ).encode(
-            'ascii',
-            'ignore'
-        ).decode('ascii')
-
-        safe_title = (
-            safe_title
-            .replace(" ", "_")
-            .replace("/", "_")
-        )[:50]
-
-        filename = (
-            f"{safe_title}_"
-            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        )
-
-        # =========================
-        # RESPONSE
-        # =========================
-
-        response = make_response(pdf_output)
-
-        response.headers['Content-Type'] = (
-            'application/pdf'
-        )
-
-        response.headers['Content-Disposition'] = (
-            f'attachment; filename="{filename}"'
-        )
-
-        return response
-
-    except Exception as e:
-
-        traceback.print_exc()
-
-        return jsonify({
-            'error': f'PDF generation failed: {str(e)}'
-        }), 500
 
 # ── SEED DATABASE ─────────────────────────────────────────────────────────────
 
