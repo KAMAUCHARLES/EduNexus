@@ -1371,7 +1371,15 @@ If subject, grade, topic, or duration is missing — ask for it politely before 
 
 
 # ── PDF DOWNLOAD (wkhtmltopdf) ──────────────────────────────────────────────
-from flask import url_for  # add to imports
+import base64
+
+def get_logo_data_uri():
+    logo_path = os.path.join(os.path.dirname(__file__), 'media', 'logo.png')
+    if os.path.exists(logo_path):
+        with open(logo_path, 'rb') as f:
+            logo_data = base64.b64encode(f.read()).decode('utf-8')
+        return f'data:image/png;base64,{logo_data}'
+    return None
 
 @app.route('/download-pdf', methods=['POST'])
 @login_required
@@ -1413,10 +1421,10 @@ def download_pdf():
         school_motto = school.motto if school and school.motto else "Excellence Through Innovation"
         current_date = datetime.now().strftime("%d %B %Y")
 
-        # Logo – absolute URL (works on Render)
-        logo_url = url_for('serve_media', filename='logo.png', _external=True)
+        # Logo as base64 data URI
+        logo_data_uri = get_logo_data_uri()
 
-        # Render HTML template
+        # Render HTML template (pass logo_data_uri instead of logo_url)
         rendered_html = render_template(
             'pdf_template.html',
             doc_title=doc_title,
@@ -1425,7 +1433,7 @@ def download_pdf():
             school_phone=school_phone,
             school_email=school_email,
             school_motto=school_motto,
-            logo_url=logo_url,
+            logo_data_uri=logo_data_uri,
             current_date=current_date,
             content_html=content_html
         )

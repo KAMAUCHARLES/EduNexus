@@ -2,427 +2,346 @@
 <html lang="en">
 
 <head>
-
-<meta charset="UTF-8">
-
-<title>
-    {{ doc_title }} – {{ school_name }}
-</title>
-
-<style>
-
-    /* ================= PAGE ================= */
-
-    @page {
-        size: A4;
-        margin: 25mm 15mm 20mm 15mm;
-    }
-
-    /* ================= GLOBAL ================= */
-
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: "Times New Roman", serif;
-        margin: 0;
-        padding: 0;
-        background: #f4f4f4;
-        color: #222;
-    }
-
-    .page {
-        width: 210mm;
-        min-height: 297mm;
-        margin: auto;
-        background: white;
-        padding: 30px 45px;
-        position: relative;
-        z-index: 2;
-    }
-
-    .header,
-    .footer,
-    .ai-content {
-        position: relative;
-        z-index: 2;
-    }
-
-    /* ================= WATERMARK ================= */
-
-    .watermark {
-
-        position: fixed;
-
-        top: 50%;
-        left: 50%;
-
-        transform:
-            translate(-50%, -50%)
-            rotate(-35deg);
-
-        font-size: 150px;
-
-        font-weight: 900;
-
-        color: rgba(122, 0, 25, 0.06);
-
-        z-index: 0;
-
-        white-space: nowrap;
-
-        pointer-events: none;
-
-        width: 140%;
-
-        text-align: center;
-
-        font-family: Arial, sans-serif;
-
-        letter-spacing: 5px;
-
-        text-transform: uppercase;
-    }
-
-    /* ================= PAGE NUMBER ================= */
-
-    .page-number {
-
-        position: fixed;
-
-        bottom: 5mm;
-        right: 10mm;
-
-        font-size: 9pt;
-
-        color: #7a0019;
-
-        font-family: Arial, sans-serif;
-
-        z-index: 999;
-    }
-
-    /* ================= HEADER ================= */
-
-    .header {
-        border-bottom: 4px solid #7a0019;
-        padding-bottom: 14px;
-        margin-bottom: 24px;
-    }
-
-    .header-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .header-table td {
-        vertical-align: middle;
-    }
-
-    .logo-cell {
-        width: 110px;
-        text-align: center;
-    }
-
-    .logo-img {
-        width: 95px;
-        height: 95px;
-        object-fit: contain;
-    }
-
-    .center-cell {
-        text-align: center;
-    }
-
-    .school-name {
-        font-size: 34px;
-        font-weight: bold;
-        color: #7a0019;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-family: Arial, sans-serif;
-    }
-
-    .school-details {
-        margin-top: 8px;
-        font-size: 12px;
-        line-height: 1.8;
-        color: #333;
-        font-weight: 500;
-    }
-
-    .motto {
-        margin-top: 6px;
-        font-style: italic;
-        color: #7a0019;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    /* ================= DOCUMENT TITLE ================= */
-
-    .document-title {
-        text-align: center;
-        font-size: 18px;
-        font-weight: bold;
-        color: #7a0019;
-        margin-bottom: 28px;
-        padding: 8px;
-        border-bottom: 2px solid #d4a017;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* ================= CONTENT ================= */
-
-    .ai-content {
-        font-size: 11pt;
-        line-height: 1.7;
-    }
-
-    .ai-content h1 {
-        font-size: 19px;
-        color: #7a0019;
-        margin-top: 28px;
-        margin-bottom: 12px;
-        border-bottom: 1px solid #d4a017;
-        padding-bottom: 6px;
-    }
-
-    .ai-content h2 {
-        font-size: 16px;
-        color: #7a0019;
-        margin-top: 22px;
-        margin-bottom: 10px;
-        border-left: 4px solid #d4a017;
-        padding-left: 10px;
-    }
-
-    .ai-content h3 {
-        font-size: 14px;
-        color: #7a0019;
-        margin-top: 18px;
-        margin-bottom: 6px;
-    }
-
-    .ai-content p {
-        text-align: justify;
-        margin-bottom: 10px;
-    }
-
-    .ai-content ul,
-    .ai-content ol {
-        margin: 10px 0 10px 24px;
-    }
-
-    .ai-content li {
-        margin-bottom: 6px;
-    }
-
-    /* ================= TABLES ================= */
-
-    .ai-content table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 20px 0;
-        font-size: 10.5pt;
-    }
-
-    .ai-content th {
-        background: #7a0019;
-        color: white;
-        padding: 10px;
-        text-align: left;
-        font-family: Arial, sans-serif;
-    }
-
-    .ai-content td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        vertical-align: top;
-    }
-
-    .ai-content tr:nth-child(even) {
-        background: #faf7f7;
-    }
-
-    /* ================= IMAGES ================= */
-
-    .ai-content img {
-        max-width: 100%;
-        display: block;
-        margin: 20px auto;
-        border-radius: 6px;
-    }
-
-    /* ================= INFO BOX ================= */
-
-    .info-box {
-        background: #faf6f6;
-        border-left: 5px solid #7a0019;
-        padding: 14px 16px;
-        margin: 18px 0;
-        border-radius: 4px;
-    }
-
-    /* ================= CODE BLOCKS ================= */
-
-    .ai-content pre {
-        background: #f5f5f5;
-        border-left: 4px solid #7a0019;
-        padding: 12px;
-        overflow-x: auto;
-        font-size: 10pt;
-        border-radius: 4px;
-    }
-
-    .ai-content code {
-        font-family: Consolas, monospace;
-        font-size: 10pt;
-    }
-
-    /* ================= BLOCKQUOTE ================= */
-
-    .ai-content blockquote {
-        border-left: 4px solid #d4a017;
-        margin: 16px 0;
-        padding: 10px 16px;
-        background: #fafafa;
-        color: #444;
-        font-style: italic;
-    }
-
-    /* ================= HORIZONTAL RULE ================= */
-
-    .ai-content hr {
-        border: none;
-        border-top: 1px solid #ccc;
-        margin: 25px 0;
-    }
-
-    /* ================= FOOTER ================= */
-
-    .footer {
-        margin-top: 45px;
-        border-top: 1px solid #ccc;
-        padding-top: 12px;
-        text-align: center;
-        font-size: 8.5pt;
-        color: #666;
-    }
-
-    /* ================= PRINT ================= */
-
-    @media print {
+    <meta charset="UTF-8">
+    <title>{{ doc_title }} – {{ school_name }}</title>
+    <style>
+        /* ================= PAGE ================= */
+        @page {
+            size: A4;
+            margin: 25mm 15mm 20mm 15mm;
+        }
+
+        /* ================= GLOBAL ================= */
+        * {
+            box-sizing: border-box;
+        }
 
         body {
-            background: white;
+            font-family: "Times New Roman", serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            color: #222;
         }
 
         .page {
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            box-shadow: none;
+            width: 210mm;
+            min-height: 297mm;
+            margin: auto;
+            background: white;
+            padding: 30px 45px;
+            position: relative;
+            z-index: 2;
         }
-    }
 
-</style>
+        .header,
+        .footer,
+        .ai-content {
+            position: relative;
+            z-index: 2;
+        }
 
+        /* ================= WATERMARK ================= */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 150px;
+            font-weight: 900;
+            color: rgba(122, 0, 25, 0.06);
+            z-index: 0;
+            white-space: nowrap;
+            pointer-events: none;
+            width: 140%;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        /* ================= PAGE NUMBER ================= */
+        .page-number {
+            position: fixed;
+            bottom: 5mm;
+            right: 10mm;
+            font-size: 9pt;
+            color: #7a0019;
+            font-family: Arial, sans-serif;
+            z-index: 999;
+        }
+
+        /* ================= HEADER ================= */
+        .header {
+            border-bottom: 4px solid #7a0019;
+            padding-bottom: 14px;
+            margin-bottom: 24px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-table td {
+            vertical-align: middle;
+        }
+
+        .logo-cell {
+            width: 110px;
+            text-align: center;
+        }
+
+        .logo-img {
+            width: 95px;
+            height: 95px;
+            object-fit: contain;
+        }
+
+        .center-cell {
+            text-align: center;
+        }
+
+        .school-name {
+            font-size: 34px;
+            font-weight: bold;
+            color: #7a0019;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: Arial, sans-serif;
+        }
+
+        .school-details {
+            margin-top: 8px;
+            font-size: 12px;
+            line-height: 1.8;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .motto {
+            margin-top: 6px;
+            font-style: italic;
+            color: #7a0019;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ================= DOCUMENT TITLE ================= */
+        .document-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #7a0019;
+            margin-bottom: 28px;
+            padding: 8px;
+            border-bottom: 2px solid #d4a017;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ================= CONTENT ================= */
+        .ai-content {
+            font-size: 11pt;
+            line-height: 1.7;
+        }
+
+        .ai-content h1 {
+            font-size: 19px;
+            color: #7a0019;
+            margin-top: 28px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #d4a017;
+            padding-bottom: 6px;
+        }
+
+        .ai-content h2 {
+            font-size: 16px;
+            color: #7a0019;
+            margin-top: 22px;
+            margin-bottom: 10px;
+            border-left: 4px solid #d4a017;
+            padding-left: 10px;
+        }
+
+        .ai-content h3 {
+            font-size: 14px;
+            color: #7a0019;
+            margin-top: 18px;
+            margin-bottom: 6px;
+        }
+
+        .ai-content p {
+            text-align: justify;
+            margin-bottom: 10px;
+        }
+
+        .ai-content ul,
+        .ai-content ol {
+            margin: 10px 0 10px 24px;
+        }
+
+        .ai-content li {
+            margin-bottom: 6px;
+        }
+
+        /* ================= TABLES ================= */
+        .ai-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 10.5pt;
+        }
+
+        .ai-content th {
+            background: #7a0019;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-family: Arial, sans-serif;
+        }
+
+        .ai-content td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        .ai-content tr:nth-child(even) {
+            background: #faf7f7;
+        }
+
+        /* ================= IMAGES ================= */
+        .ai-content img {
+            max-width: 100%;
+            display: block;
+            margin: 20px auto;
+            border-radius: 6px;
+        }
+
+        /* ================= INFO BOX ================= */
+        .info-box {
+            background: #faf6f6;
+            border-left: 5px solid #7a0019;
+            padding: 14px 16px;
+            margin: 18px 0;
+            border-radius: 4px;
+        }
+
+        /* ================= CODE BLOCKS ================= */
+        .ai-content pre {
+            background: #f5f5f5;
+            border-left: 4px solid #7a0019;
+            padding: 12px;
+            overflow-x: auto;
+            font-size: 10pt;
+            border-radius: 4px;
+        }
+
+        .ai-content code {
+            font-family: Consolas, monospace;
+            font-size: 10pt;
+        }
+
+        /* ================= BLOCKQUOTE ================= */
+        .ai-content blockquote {
+            border-left: 4px solid #d4a017;
+            margin: 16px 0;
+            padding: 10px 16px;
+            background: #fafafa;
+            color: #444;
+            font-style: italic;
+        }
+
+        /* ================= HORIZONTAL RULE ================= */
+        .ai-content hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 25px 0;
+        }
+
+        /* ================= FOOTER ================= */
+        .footer {
+            margin-top: 45px;
+            border-top: 1px solid #ccc;
+            padding-top: 12px;
+            text-align: center;
+            font-size: 8.5pt;
+            color: #666;
+        }
+
+        /* ================= PRINT ================= */
+        @media print {
+            body {
+                background: white;
+            }
+            .page {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <!-- WATERMARK -->
-
 <div class="watermark">
     {{ school_name }}
 </div>
 
-
 <div class="page">
 
     <!-- HEADER -->
-
     <div class="header">
-
         <table class="header-table">
-
             <tr>
-
                 <td class="logo-cell">
-
-                    <img
-                        src="media/logo.png"
-                        class="logo-img"
-                        alt="School Logo"
-                    >
-
+                    {% if logo_data_uri %}
+                        <img src="{{ logo_data_uri }}" class="logo-img" alt="School Logo">
+                    {% else %}
+                        <!-- Optional placeholder if no logo -->
+                        <div style="width:95px; height:95px;"></div>
+                    {% endif %}
                 </td>
-
                 <td class="center-cell">
-
                     <div class="school-name">
                         {{ school_name }}
                     </div>
-
                     <div class="school-details">
-
                         {{ school_address }}<br>
-
-                        📞 {{ school_phone }}
-                        &nbsp;&nbsp; | &nbsp;&nbsp;
-
-                        ✉️ {{ school_email }}
-
+                        📞 {{ school_phone }} &nbsp;&nbsp; | &nbsp;&nbsp; ✉️ {{ school_email }}
                     </div>
-
                     <div class="motto">
                         "{{ school_motto }}"
                     </div>
-
                 </td>
-
                 <td class="logo-cell">
-
-                    <img
-                        src="{{ logo_url }}"
-                        class="logo-img"
-                        alt="School Logo"
-                    >
-
+                    {% if logo_data_uri %}
+                        <img src="{{ logo_data_uri }}" class="logo-img" alt="School Logo">
+                    {% else %}
+                        <div style="width:95px; height:95px;"></div>
+                    {% endif %}
                 </td>
-
             </tr>
-
         </table>
-
     </div>
 
     <!-- DOCUMENT TITLE -->
-
     <div class="document-title">
         {{ doc_title }}
     </div>
 
     <!-- AI CONTENT -->
-
     <div class="ai-content">
         {{ content_html | safe }}
     </div>
 
     <!-- FOOTER -->
-
     <div class="footer">
-
-        Generated on {{ current_date }}
-
-        |
-
-        {{ school_name }}
-        – Official Institutional Document
-
+        Generated on {{ current_date }} | {{ school_name }} – Official Institutional Document
     </div>
 
 </div>
