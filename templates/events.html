@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+{% block page_title %}School Events{% endblock %}
+{% block topbar_actions %}
+{% if session.role in ('superadmin','admin') %}
+<a href="{{ url_for('add_event') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Event</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+{% macro event_card(ev) %}
+{% set colors = {'academic':'blue','sports':'green','cultural':'yellow','holiday':'purple'} %}
+{% set c = colors.get(ev.event_type, 'gray') %}
+<div class="card">
+  <div class="card-body">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:16px;flex:1">
+        <div style="width:52px;height:52px;background:var(--bg3);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border)">
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent);line-height:1">{{ ev.event_date.strftime('%d') }}</div>
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">{{ ev.event_date.strftime('%b') }}</div>
+        </div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px">{{ ev.title }}</div>
+          {% if ev.description %}<div style="font-size:13px;color:var(--text2);margin-bottom:6px">{{ ev.description[:100] }}{% if ev.description|length > 100 %}...{% endif %}</div>{% endif %}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="badge badge-{{ c }}">{{ ev.event_type|title }}</span>
+            {% if ev.venue %}<span class="text-muted"><i class="fa-solid fa-location-dot" style="margin-right:4px"></i>{{ ev.venue }}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% if session.role == 'superadmin' %}
+      <button class="btn btn-danger btn-sm" style="flex-shrink:0;margin-left:12px" onclick="confirmDelete('{{ url_for('delete_event', id=ev.id) }}','Delete {{ ev.title }}?','Remove this event permanently?')"><i class="fa-solid fa-trash"></i></button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+<div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px;color:var(--green)">
+  <i class="fa-solid fa-calendar-day" style="margin-right:8px"></i>Upcoming Events ({{ upcoming|length }})
+</div>
+{% if upcoming %}
+<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+  {% for ev in upcoming %}{{ event_card(ev) }}{% endfor %}
+</div>
+{% else %}
+<div class="card mb-24" style="margin-bottom:28px"><div class="empty-state" style="padding:30px"><p>No upcoming events</p></div></div>
+{% endif %}
+
+{% if past %}
+<div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text3)">
+  <i class="fa-solid fa-clock-rotate-left" style="margin-right:8px"></i>Past Events
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;opacity:0.6">
+  {% for ev in past %}{{ event_card(ev) }}{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

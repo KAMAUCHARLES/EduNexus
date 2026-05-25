@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}New Announcement{% endblock %}
+{% block page_title %}Post Announcement{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('announcements') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:640px">
+  <div class="card-body">
+    <form method="POST">
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:18px">
+        <div class="form-group"><label class="form-label">Title *</label><input type="text" name="title" class="form-control" required placeholder="Announcement title..."></div>
+        <div class="form-group"><label class="form-label">Content *</label><textarea name="content" class="form-control" rows="6" required placeholder="Write your announcement here..."></textarea></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Audience</label>
+            <select name="audience" class="form-control">
+              <option value="all">Everyone</option>
+              <option value="teachers">Teachers Only</option>
+              <option value="students">Students Only</option>
+              <option value="parents">Parents Only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select name="priority" class="form-control">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-bullhorn"></i> Post Announcement</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

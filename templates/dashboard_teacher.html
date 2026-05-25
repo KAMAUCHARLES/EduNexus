@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block page_title %}My Teaching Hub{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card blue"><i class="fa-solid fa-layer-group stat-icon"></i><div class="stat-label">My Streams</div><div class="stat-value">{{ stats.my_streams }}</div><div class="stat-sub">Assigned classes</div></div>
+  <div class="stat-card green"><i class="fa-solid fa-book-open stat-icon"></i><div class="stat-label">Subjects</div><div class="stat-value">{{ stats.my_subjects }}</div><div class="stat-sub">Teaching load</div></div>
+  <div class="stat-card yellow"><i class="fa-solid fa-users stat-icon"></i><div class="stat-label">My Students</div><div class="stat-value">{{ stats.total_students }}</div><div class="stat-sub">Across all classes</div></div>
+  <div class="stat-card purple"><i class="fa-solid fa-clipboard-check stat-icon"></i><div class="stat-label">Today's Attendance</div><div class="stat-value">{{ stats.today_attendance }}</div></div>
+  <div class="stat-card {{ 'orange' if stats.pending_grading > 0 else 'green' }}">
+    <i class="fa-solid fa-clock stat-icon"></i><div class="stat-label">Pending Grading</div><div class="stat-value">{{ stats.pending_grading }}</div>
+    <div class="stat-sub">Assignment submissions</div>
+  </div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Quick Actions</div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+      <a href="{{ url_for('attendance') }}" class="btn btn-primary"><i class="fa-solid fa-clipboard-check"></i> Take Attendance</a>
+      <a href="{{ url_for('enter_results') }}" class="btn btn-ghost"><i class="fa-solid fa-keyboard"></i> Enter Exam Results</a>
+      <a href="{{ url_for('add_assignment') }}" class="btn btn-ghost"><i class="fa-solid fa-circle-plus"></i> Post Assignment</a>
+      <a href="{{ url_for('assignments') }}" class="btn btn-ghost"><i class="fa-solid fa-book-bookmark"></i> My Assignments</a>
+      <a href="{{ url_for('students') }}" class="btn btn-ghost"><i class="fa-solid fa-users"></i> My Students</a>
+      <a href="{{ url_for('timetable') }}" class="btn btn-ghost"><i class="fa-solid fa-table-cells"></i> My Timetable</a>
+      <a href="{{ url_for('send_message') }}" class="btn btn-ghost"><i class="fa-solid fa-envelope"></i> Send Message</a>
+    </div>
+  </div>
+  <div>
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-header"><div class="card-title">My Assignments</div><a href="{{ url_for('assignments') }}" class="btn btn-ghost btn-sm">View All →</a></div>
+      <div class="card-body" style="padding:0 20px">
+        {% for a in my_assignments %}
+        <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:600;font-size:13px;margin-bottom:3px">{{ a.title }}</div>
+              <div class="text-muted"><span class="badge badge-blue" style="margin-right:6px">{{ a.subject.name }}</span>{{ a.stream.name }}</div>
+            </div>
+            <span class="badge badge-{{ 'red' if a.due_date < date.today() else ('yellow' if (a.due_date - date.today()).days <= 3 else 'green') }}">
+              {{ 'Overdue' if a.due_date < date.today() else 'Due ' + a.due_date.strftime('%d %b') }}
+            </span>
+          </div>
+        </div>
+        {% else %}<div class="empty-state" style="padding:24px"><p>No assignments yet</p></div>{% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Announcements</div></div>
+      <div class="card-body" style="padding:0 20px">
+        {% for ann in announcements %}
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-weight:600;font-size:13px;margin-bottom:3px">{{ ann.title }}</div>
+          <div class="text-muted">{{ ann.content[:80] }}{% if ann.content|length > 80 %}...{% endif %}</div>
+        </div>
+        {% else %}<div class="empty-state" style="padding:24px"><p>No announcements</p></div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

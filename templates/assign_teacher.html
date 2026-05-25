@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Assign Teacher{% endblock %}
+{% block page_title %}Teacher Subject Assignments{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('teachers') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="avatar avatar-lg" style="background:{{ teacher.avatar_color }}">{{ teacher.full_name[0] }}</div>
+        <div><div class="card-title">{{ teacher.full_name }}</div><div class="text-muted">{{ teacher.email }}</div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:12px">Assign to Stream & Subject</div>
+      <form method="POST">
+        <div class="form-group" style="margin-bottom:14px">
+          <label class="form-label">Stream *</label>
+          <select name="stream_id" class="form-control" required>
+            <option value="">Select stream...</option>
+            {% for s in streams %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label class="form-label">Subject *</label>
+          <select name="subject_id" class="form-control" required>
+            <option value="">Select subject...</option>
+            {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-full" style="justify-content:center"><i class="fa-solid fa-link"></i> Assign</button>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Current Assignments ({{ assignments|length }})</div></div>
+    {% if assignments %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Stream</th><th>Subject</th><th></th></tr></thead>
+        <tbody>
+          {% for a in assignments %}
+          <tr>
+            <td>{{ a.stream.name }}</td>
+            <td><span class="badge badge-blue">{{ a.subject.name }}</span></td>
+            <td>
+              {% if session.role == 'superadmin' %}
+              <button class="btn btn-danger btn-xs" onclick="confirmDelete('{{ url_for('delete_teacher_assignment', id=a.id) }}','Remove Assignment?','Remove {{ teacher.full_name }} from {{ a.subject.name }} in {{ a.stream.name }}?')"><i class="fa-solid fa-trash"></i></button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:30px"><i class="fa-solid fa-link"></i><p>No assignments yet</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

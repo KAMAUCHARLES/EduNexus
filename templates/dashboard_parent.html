@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Parent Dashboard{% endblock %}
+{% block page_title %}My Children's Overview{% endblock %}
+{% block content %}
+{% if children_data %}
+<div class="stats-grid">
+  {% set total_pending = children_data|sum(attribute='pending_assignments') %}
+  <div class="stat-card blue"><i class="fa-solid fa-children stat-icon"></i><div class="stat-label">My Children</div><div class="stat-value">{{ children_data|length }}</div><div class="stat-sub">Enrolled at school</div></div>
+  <div class="stat-card yellow"><i class="fa-solid fa-book-bookmark stat-icon"></i><div class="stat-label">Pending Assignments</div><div class="stat-value">{{ total_pending }}</div><div class="stat-sub">Across all children</div></div>
+</div>
+
+{% for item in children_data %}
+{% set child = item.student %}
+<div class="card" style="margin-bottom:20px">
+  <div style="height:4px;background:linear-gradient(90deg,{{ child.user.avatar_color }},transparent)"></div>
+  <div class="card-header">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="avatar avatar-lg" style="background:{{ child.user.avatar_color }}">{{ child.user.full_name[0] }}</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800">{{ child.user.full_name }}</div>
+        <div class="text-muted">{{ child.adm_no }} · {{ child.stream.name if child.stream else 'No stream' }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('student_profile', id=child.id) }}" class="btn btn-ghost btn-sm">Full Profile →</a>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px">
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">{{ item.avg }}</div>
+        <div class="text-muted">Avg Score</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:{{ 'var(--green)' if item.att_pct >= 80 else ('var(--yellow)' if item.att_pct >= 60 else 'var(--red)') }}">{{ item.att_pct }}%</div>
+        <div class="text-muted">Attendance</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:{{ 'var(--red)' if item.pending_assignments > 0 else 'var(--green)' }}">{{ item.pending_assignments }}</div>
+        <div class="text-muted">Pending Assignments</div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Last 7 Days Attendance</div>
+    <div style="display:flex;gap:6px">
+      {% for a in item.recent_att %}
+      <div style="flex:1;text-align:center">
+        <div style="width:28px;height:28px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
+          background:{{ 'rgba(16,217,160,0.2)' if a.status=='present' else ('rgba(247,79,106,0.2)' if a.status=='absent' else ('rgba(245,200,66,0.2)' if a.status=='late' else 'rgba(79,142,247,0.2)')) }};
+          color:{{ 'var(--green)' if a.status=='present' else ('var(--red)' if a.status=='absent' else ('var(--yellow)' if a.status=='late' else 'var(--accent)')) }}">
+          {{ 'P' if a.status=='present' else ('A' if a.status=='absent' else ('L' if a.status=='late' else 'E')) }}
+        </div>
+        <div style="font-size:9px;color:var(--text3)">{{ a.date.strftime('%a') }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Announcements</div></div>
+    <div class="card-body" style="padding:0 20px">
+      {% for ann in announcements %}
+      <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">{{ ann.title }}</div>
+        <div class="text-muted">{{ ann.content[:100] }}{% if ann.content|length > 100 %}...{% endif %}</div>
+      </div>
+      {% else %}<div class="empty-state" style="padding:24px"><p>No announcements</p></div>{% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Upcoming Events</div></div>
+    <div class="card-body" style="padding:0 20px">
+      {% for ev in events %}
+      <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="background:var(--bg3);border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0">
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">{{ ev.event_date.strftime('%d') }}</div>
+          <div style="font-size:10px;color:var(--text3)">{{ ev.event_date.strftime('%b') }}</div>
+        </div>
+        <div><div style="font-weight:600;font-size:13px">{{ ev.title }}</div><div class="text-muted">{{ ev.venue }}</div></div>
+      </div>
+      {% else %}<div class="empty-state" style="padding:24px"><p>No events</p></div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-children"></i><p>No children linked to your account. Contact the school administrator.</p></div></div>
+{% endif %}
+{% endblock %}

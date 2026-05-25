@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}
+  Welcome back, {{ session.full_name.split()[0] }} 👋
+{% endblock %}
+{% block extra_css %}
+<style>
+  .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+  .announce-item {
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .announce-item:last-child { border: none; padding-bottom: 0; }
+  .priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .event-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .event-item:last-child { border: none; }
+  .event-date-box {
+    width: 44px; flex-shrink: 0;
+    background: var(--bg3); border-radius: 10px;
+    text-align: center; padding: 6px;
+  }
+  .event-date-box .day { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .event-date-box .mon { font-size: 10px; color: var(--text3); text-transform: uppercase; }
+  .student-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .student-row:last-child { border: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-card blue">
+    <i class="fa-solid fa-users stat-icon"></i>
+    <div class="stat-label">Total Students</div>
+    <div class="stat-value">{{ stats.students }}</div>
+    <div class="stat-sub">Active enrolments</div>
+  </div>
+  <div class="stat-card green">
+    <i class="fa-solid fa-chalkboard-user stat-icon"></i>
+    <div class="stat-label">Teachers</div>
+    <div class="stat-value">{{ stats.teachers }}</div>
+    <div class="stat-sub">Teaching staff</div>
+  </div>
+  <div class="stat-card yellow">
+    <i class="fa-solid fa-layer-group stat-icon"></i>
+    <div class="stat-label">Streams</div>
+    <div class="stat-value">{{ stats.streams }}</div>
+    <div class="stat-sub">Active classes</div>
+  </div>
+  <div class="stat-card purple">
+    <i class="fa-solid fa-book-open stat-icon"></i>
+    <div class="stat-label">Subjects</div>
+    <div class="stat-value">{{ stats.subjects }}</div>
+    <div class="stat-sub">In curriculum</div>
+  </div>
+  <div class="stat-card pink">
+    <i class="fa-solid fa-file-pen stat-icon"></i>
+    <div class="stat-label">Exams</div>
+    <div class="stat-value">{{ stats.exams }}</div>
+    <div class="stat-sub">This year</div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div style="display:flex;flex-direction:column;gap:24px;">
+
+    <!-- Recent Students -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Recent Admissions</div>
+        <a href="{{ url_for('students') }}" class="btn btn-ghost btn-sm">View All →</a>
+      </div>
+      <div class="card-body" style="padding:0 24px;">
+        {% for s in recent_students %}
+        <div class="student-row">
+          <div class="avatar" style="background:{{ s.user.avatar_color }}">{{ s.user.full_name[0] }}</div>
+          <div>
+            <div style="font-size:14px;font-weight:600;">{{ s.user.full_name }}</div>
+            <div style="font-size:12px;color:var(--text3)">{{ s.adm_no }} · {{ s.stream.name if s.stream else 'Unassigned' }}</div>
+          </div>
+          <div class="ml-auto">
+            <span class="badge badge-{{ 'blue' if s.gender=='Male' else 'pink' }}">{{ s.gender }}</span>
+          </div>
+          <a href="{{ url_for('student_profile', id=s.id) }}" class="btn btn-ghost btn-sm">View</a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Announcements -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Announcements</div>
+        <a href="{{ url_for('add_announcement') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> New</a>
+      </div>
+      <div class="card-body" style="padding:0 24px;">
+        {% for ann in announcements %}
+        <div class="announce-item">
+          <div class="priority-dot" style="background:{{ '#f74f6a' if ann.priority=='urgent' else ('#f5c842' if ann.priority=='high' else '#4f8ef7') }}"></div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px;">{{ ann.title }}</div>
+            <div style="font-size:12px;color:var(--text3)">{{ ann.content[:80] }}{% if ann.content|length > 80 %}...{% endif %}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px;">{{ ann.created_at.strftime('%d %b %Y') }} · <span class="badge badge-{{ 'red' if ann.priority=='urgent' else ('yellow' if ann.priority=='high' else 'blue') }}">{{ ann.priority }}</span></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-bullhorn"></i><p>No announcements yet</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:24px;">
+    <!-- School info -->
+    {% if school %}
+    <div class="card">
+      <div class="card-body" style="text-align:center;">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;">🏫</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:4px;">{{ school.name }}</div>
+        <div style="font-size:12px;color:var(--text3);font-style:italic;margin-bottom:12px;">"{{ school.motto }}"</div>
+        <div style="font-size:12px;color:var(--text2)"><i class="fa-solid fa-user-tie" style="margin-right:6px;color:var(--accent)"></i>{{ school.principal }}</div>
+        {% if school.founded %}
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;"><i class="fa-solid fa-calendar" style="margin-right:6px;color:var(--green)"></i>Est. {{ school.founded }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Upcoming Events -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Upcoming Events</div>
+        <a href="{{ url_for('add_event') }}" class="btn btn-ghost btn-sm">+ Add</a>
+      </div>
+      <div class="card-body" style="padding:0 24px;">
+        {% for ev in events %}
+        <div class="event-item">
+          <div class="event-date-box">
+            <div class="day">{{ ev.event_date.strftime('%d') }}</div>
+            <div class="mon">{{ ev.event_date.strftime('%b') }}</div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">{{ ev.title }}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">
+              <span class="badge badge-{{ 'blue' if ev.event_type=='academic' else ('green' if ev.event_type=='sports' else 'yellow') }}">{{ ev.event_type }}</span>
+              {% if ev.venue %} · {{ ev.venue }}{% endif %}
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fa-solid fa-calendar-days"></i><p>No upcoming events</p></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Quick Actions</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+        <a href="{{ url_for('add_student') }}" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;"><i class="fa-solid fa-user-plus" style="color:var(--accent)"></i> Add New Student</a>
+        <a href="{{ url_for('add_teacher') }}" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;"><i class="fa-solid fa-chalkboard-user" style="color:var(--green)"></i> Add Teacher</a>
+        <a href="{{ url_for('enter_results') }}" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;"><i class="fa-solid fa-keyboard" style="color:var(--yellow)"></i> Enter Exam Results</a>
+        <a href="{{ url_for('attendance') }}" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;"><i class="fa-solid fa-clipboard-check" style="color:var(--pink)"></i> Take Attendance</a>
+        <a href="{{ url_for('add_announcement') }}" class="btn btn-ghost" style="justify-content:flex-start;gap:12px;"><i class="fa-solid fa-bullhorn" style="color:var(--orange)"></i> Post Announcement</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

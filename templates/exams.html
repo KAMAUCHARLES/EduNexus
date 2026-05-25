@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Exams{% endblock %}
+{% block page_title %}Examinations{% endblock %}
+{% block topbar_actions %}
+{% if session.role in ('superadmin','admin') %}
+<a href="{{ url_for('add_exam') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Exam</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">All Exams</div></div>
+  {% if exams %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Exam Name</th><th>Term</th><th>Year</th><th>Type</th><th>Dates</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for e in exams %}
+        <tr>
+          <td style="font-weight:600">{{ e.name }}</td>
+          <td><span class="badge badge-blue">{{ e.term }}</span></td>
+          <td>{{ e.year }}</td>
+          <td><span class="badge badge-{{ 'green' if e.exam_type=='End-Term' else ('yellow' if e.exam_type=='Mid-Term' else 'purple') }}">{{ e.exam_type }}</span></td>
+          <td class="text-muted">
+            {% if e.start_date %}{{ e.start_date.strftime('%d %b') }} – {{ e.end_date.strftime('%d %b %Y') if e.end_date else '?' }}{% else %}—{% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <a href="{{ url_for('results_view') }}?exam_id={{ e.id }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-chart-bar"></i> Results</a>
+              {% if session.role in ('superadmin','admin','teacher') %}
+              <a href="{{ url_for('enter_results') }}?exam_id={{ e.id }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-keyboard"></i> Marks</a>
+              {% endif %}
+              {% if session.role == 'superadmin' %}
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_exam', id=e.id) }}','Delete {{ e.name }}?','All results for this exam will also be permanently deleted.')"><i class="fa-solid fa-trash"></i></button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa-solid fa-file-pen"></i><p>No exams created yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

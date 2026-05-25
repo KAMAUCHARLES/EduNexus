@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Teachers{% endblock %}
+{% block page_title %}Teaching Staff{% endblock %}
+{% block topbar_actions %}
+{% if session.role in ('superadmin','admin') %}
+<a href="{{ url_for('add_teacher') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Teacher</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">{{ teacher_data|length }} Teacher{{ 's' if teacher_data|length != 1 }}</div></div>
+  {% if teacher_data %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Teacher</th><th>Email</th><th>Phone</th><th>Assignments</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for item in teacher_data %}
+        {% set t = item.teacher %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="avatar" style="background:{{ t.avatar_color }}">{{ t.full_name[0] }}</div>
+              <div>
+                <div style="font-weight:600">{{ t.full_name }}</div>
+                <div class="text-muted">@{{ t.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ t.email }}</td>
+          <td>{{ t.phone or '—' }}</td>
+          <td><span class="badge badge-blue">{{ item.assignments }} subject{{ 's' if item.assignments != 1 }}</span></td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <a href="{{ url_for('assign_teacher', id=t.id) }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-link"></i> Assign</a>
+              {% if session.role == 'superadmin' %}
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_teacher', id=t.id) }}','Remove {{ t.full_name }}?','This teacher will be deactivated and removed from all classes.')"><i class="fa-solid fa-trash"></i></button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa-solid fa-chalkboard-user"></i><p>No teachers added yet. <a href="{{ url_for('add_teacher') }}" class="link">Add one →</a></p></div>
+  {% endif %}
+</div>
+{% endblock %}

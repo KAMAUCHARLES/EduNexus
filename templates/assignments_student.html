@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}My Assignments{% endblock %}
+{% block page_title %}My Assignments{% endblock %}
+{% block extra_css %}
+<style>
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:22px 16px;text-align:center;cursor:pointer;transition:all .25s;background:var(--bg3);position:relative}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(79,142,247,0.06)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone .uz-icon{font-size:30px;margin-bottom:8px;opacity:.45}
+.upload-zone .uz-label{font-size:13px;color:var(--text2);font-weight:600}
+.upload-zone .uz-hint{font-size:11px;color:var(--text3);margin-top:4px}
+.file-preview{display:none;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);background:rgba(16,217,160,0.07);border:1px solid rgba(16,217,160,0.2);margin-top:10px}
+.file-preview.show{display:flex}
+.file-preview .fname{font-size:13px;font-weight:600;color:var(--text)}
+.file-preview .fsize{font-size:11px;color:var(--text3);margin-top:2px}
+.remove-file{margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;transition:background .15s}
+.remove-file:hover{background:rgba(247,79,106,0.12)}
+.submission-done{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-sm);background:rgba(16,217,160,0.07);border:1px solid rgba(16,217,160,0.2)}
+.grade-box{background:rgba(16,217,160,0.07);border:1px solid rgba(16,217,160,0.2);border-radius:var(--radius-sm);padding:14px;text-align:center;grid-column:span 2}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if student %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)">
+  <div class="avatar" style="background:{{ student.user.avatar_color }}">{{ student.user.full_name[0] }}</div>
+  <div>
+    <div style="font-weight:700">{{ student.user.full_name }}</div>
+    <div class="text-muted">{{ student.stream.name if student.stream else 'No stream' }} · {{ student.adm_no }}</div>
+  </div>
+  {% set done = sub_map|length %}
+  {% set total = assignments|length %}
+  <div style="margin-left:auto;display:flex;gap:20px">
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">{{ total }}</div><div class="text-muted">Total</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--green)">{{ done }}</div><div class="text-muted">Done</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:{{ 'var(--red)' if total-done > 0 else 'var(--text3)' }}">{{ total - done }}</div><div class="text-muted">Pending</div></div>
+  </div>
+</div>
+{% endif %}
+
+{% if assignments %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px">
+{% for a in assignments %}
+{% set sub = sub_map.get(a.id) %}
+{% set overdue = a.due_date < date.today() and not sub %}
+{% set soon    = not sub and not overdue and (a.due_date - date.today()).days <= 3 %}
+<div class="card">
+  <div style="height:4px;background:{{ 'var(--green)' if sub else ('var(--red)' if overdue else ('var(--yellow)' if soon else 'var(--accent)')) }}"></div>
+  <div class="card-body">
+
+    <!-- Header row -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:6px">{{ a.title }}</div>
+        <span class="badge badge-blue">{{ a.subject.name }}</span>
+        <span class="badge badge-gray">{{ a.stream.name }}</span>
+      </div>
+      {% if sub %}
+        {% if sub.status=='graded' %}<span class="badge badge-green" style="flex-shrink:0"><i class="fa-solid fa-star"></i>&nbsp;Graded</span>
+        {% elif sub.status=='late' %}<span class="badge badge-orange" style="flex-shrink:0"><i class="fa-solid fa-clock"></i>&nbsp;Late</span>
+        {% else %}<span class="badge badge-blue" style="flex-shrink:0"><i class="fa-solid fa-check"></i>&nbsp;Submitted</span>{% endif %}
+      {% elif overdue %}<span class="badge badge-red" style="flex-shrink:0"><i class="fa-solid fa-triangle-exclamation"></i>&nbsp;Overdue</span>
+      {% elif soon %}<span class="badge badge-yellow" style="flex-shrink:0"><i class="fa-solid fa-clock"></i>&nbsp;Due Soon</span>
+      {% else %}<span class="badge badge-gray" style="flex-shrink:0">Pending</span>{% endif %}
+    </div>
+
+    <!-- Description -->
+    <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:14px">{{ a.description[:150] }}{% if a.description|length > 150 %}...{% endif %}</div>
+
+    <!-- Meta -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--bg3);border-radius:8px;padding:9px 12px;font-size:11.5px">
+        <div class="text-muted">Due Date</div>
+        <div style="font-weight:700;color:{{ 'var(--red)' if overdue else 'var(--text)' }}">{{ a.due_date.strftime('%d %b %Y') }}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:9px 12px;font-size:11.5px">
+        <div class="text-muted">Max Marks</div>
+        <div style="font-weight:700">{{ a.max_marks }}</div>
+      </div>
+      {% if sub and sub.marks_awarded is not none %}
+      <div class="grade-box">
+        <div class="text-muted" style="font-size:11px;margin-bottom:4px">Your Score</div>
+        <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--green)">{{ sub.marks_awarded|int }} / {{ a.max_marks }}</div>
+        {% set pct = (sub.marks_awarded / a.max_marks * 100)|round(0)|int %}
+        <div style="margin-top:8px"><div class="progress"><div class="progress-bar pb-green" style="width:{{ pct }}%"></div></div></div>
+        <div class="text-muted" style="margin-top:4px">{{ pct }}%</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">
+      <i class="fa-solid fa-chalkboard-user" style="margin-right:5px;color:var(--accent)"></i>{{ a.teacher.full_name }}
+    </div>
+
+    <!-- Already submitted -->
+    {% if sub %}
+    <div class="submission-done">
+      <i class="fa-solid fa-circle-check" style="color:var(--green);font-size:18px;flex-shrink:0"></i>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--green)">Submitted</div>
+        <div style="font-size:11px;color:var(--text3)">{{ sub.submitted_at.strftime('%d %b %Y at %H:%M') }}</div>
+      </div>
+      {% if sub.file_path %}
+      <a href="{{ url_for('serve_upload', filename=sub.file_path) }}"
+         class="btn btn-ghost btn-sm" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <i class="{{ file_icon(sub.file_name) }}" style="color:{{ file_color(sub.file_name) }};font-size:15px"></i>
+        <span style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">{{ sub.file_name }}</span>
+        <i class="fa-solid fa-download" style="font-size:10px;color:var(--text3)"></i>
+      </a>
+      {% endif %}
+    </div>
+    {% if sub.notes %}
+    <div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12.5px;color:var(--text2)">
+      <span style="color:var(--text3);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Your note — </span>{{ sub.notes }}
+    </div>
+    {% endif %}
+
+    <!-- Submit form -->
+    {% else %}
+    {% if overdue %}
+    <div class="info-box red" style="margin-bottom:12px;font-size:12.5px">
+      <i class="fa-solid fa-triangle-exclamation" style="color:var(--red);margin-right:6px"></i>
+      <strong>Overdue.</strong> You can still submit late — your teacher will be notified.
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('submit_assignment', id=a.id) }}"
+          enctype="multipart/form-data">
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Note for teacher <span class="text-muted">(optional)</span></label>
+        <textarea name="notes" class="form-control"
+                  placeholder="Describe your approach, any questions, or challenges faced..."
+                  style="min-height:66px"></textarea>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">
+          Attach File
+          <span class="text-muted">(optional &nbsp;·&nbsp; max {{ max_mb }}MB)</span>
+        </label>
+        <div class="upload-zone" id="zone{{ a.id }}"
+             ondragover="onDrag(event,'zone{{ a.id }}')"
+             ondragleave="offDrag('zone{{ a.id }}')"
+             ondrop="onDrop(event,'zone{{ a.id }}','fi{{ a.id }}','prev{{ a.id }}')">
+          <input type="file" name="submission_file" id="fi{{ a.id }}"
+                 accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.ppt,.pptx,.xls,.xlsx,.zip,.mp4,.mp3"
+                 onchange="showPrev(this,'{{ a.id }}')">
+          <div class="uz-icon">📎</div>
+          <div class="uz-label">Drop file here or <span style="color:var(--accent)">click to browse</span></div>
+          <div class="uz-hint">PDF · Word · Excel · PowerPoint · Images · ZIP · up to {{ max_mb }}MB</div>
+        </div>
+
+        <div class="file-preview" id="prev{{ a.id }}">
+          <i id="pico{{ a.id }}" class="fa-solid fa-file" style="font-size:22px;flex-shrink:0"></i>
+          <div>
+            <div class="fname" id="pnam{{ a.id }}">—</div>
+            <div class="fsize" id="psiz{{ a.id }}">—</div>
+          </div>
+          <button type="button" class="remove-file"
+                  onclick="clearFile('{{ a.id }}')" title="Remove">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit"
+              class="btn {{ 'btn-warning' if overdue else 'btn-success' }} w-full"
+              style="justify-content:center">
+        <i class="fa-solid fa-{{ 'clock' if overdue else 'paper-plane' }}"></i>
+        {{ 'Submit Late' if overdue else 'Submit Assignment' }}
+      </button>
+    </form>
+    {% endif %}
+
+  </div>
+</div>
+{% endfor %}
+</div>
+
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-book-bookmark"></i><p>No assignments posted for your class yet.</p></div></div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var iconMap={pdf:'fa-file-pdf',doc:'fa-file-word',docx:'fa-file-word',ppt:'fa-file-powerpoint',pptx:'fa-file-powerpoint',xls:'fa-file-excel',xlsx:'fa-file-excel',png:'fa-file-image',jpg:'fa-file-image',jpeg:'fa-file-image',gif:'fa-file-image',txt:'fa-file-lines',zip:'fa-file-zipper',mp4:'fa-file-video',mp3:'fa-file-audio'};
+var colorMap={pdf:'#f74f6a',doc:'#4f8ef7',docx:'#4f8ef7',ppt:'#f79240',pptx:'#f79240',xls:'#10d9a0',xlsx:'#10d9a0',png:'#f76ab4',jpg:'#f76ab4',jpeg:'#f76ab4',gif:'#f76ab4',txt:'#8896b0',zip:'#f5c842',mp4:'#7c6af7',mp3:'#7c6af7'};
+var MAX_BYTES = {{ max_mb }} * 1024 * 1024;
+
+function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+
+function showPrev(input, id) {
+  var f = input.files[0];
+  if (!f) return;
+  if (f.size > MAX_BYTES) {
+    alert('File is too large. Maximum size is {{ max_mb }}MB.');
+    input.value = ''; return;
+  }
+  var ext = f.name.split('.').pop().toLowerCase();
+  document.getElementById('pnam'+id).textContent = f.name;
+  document.getElementById('psiz'+id).textContent = fmtSize(f.size);
+  var ico = document.getElementById('pico'+id);
+  ico.className = 'fa-solid ' + (iconMap[ext]||'fa-file');
+  ico.style.color = colorMap[ext]||'var(--text3)';
+  document.getElementById('prev'+id).classList.add('show');
+  var z = document.getElementById('zone'+id);
+  z.style.borderColor='var(--green)'; z.style.background='rgba(16,217,160,0.04)';
+}
+
+function clearFile(id) {
+  document.getElementById('fi'+id).value = '';
+  document.getElementById('prev'+id).classList.remove('show');
+  var z = document.getElementById('zone'+id);
+  z.style.borderColor=''; z.style.background='';
+}
+
+function onDrag(e, zid) { e.preventDefault(); document.getElementById(zid).classList.add('drag-over'); }
+function offDrag(zid)   { document.getElementById(zid).classList.remove('drag-over'); }
+
+function onDrop(e, zid, fid, pid) {
+  e.preventDefault(); offDrag(zid);
+  if (!e.dataTransfer.files.length) return;
+  var input = document.getElementById(fid);
+  var dt = new DataTransfer();
+  dt.items.add(e.dataTransfer.files[0]);
+  input.files = dt.files;
+  var id = fid.replace('fi','');
+  showPrev(input, id);
+}
+</script>
+{% endblock %}

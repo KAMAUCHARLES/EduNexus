@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Streams{% endblock %}
+{% block page_title %}Class Streams{% endblock %}
+{% block topbar_actions %}
+{% if session.role in ('superadmin','admin') %}
+<a href="{{ url_for('add_stream') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Stream</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+{% if session.role == 'teacher' %}
+<div class="info-box blue mb-20" style="margin-bottom:18px">
+  <i class="fa-solid fa-eye" style="color:var(--accent);margin-right:8px"></i>
+  Showing only streams you are assigned to teach.
+</div>
+{% endif %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px">
+  {% for item in stream_data %}
+  {% set s = item.stream %}
+  {% set pct = [item.count / s.capacity * 100, 100]|min %}
+  <div class="card">
+    <div style="height:4px;background:linear-gradient(90deg,{{ 'var(--red)' if pct >= 100 else ('var(--yellow)' if pct >= 80 else 'var(--accent)') }},transparent)"></div>
+    <div class="card-body">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800">{{ s.name }}</div>
+          <span class="badge badge-purple">{{ s.grade }}</span>
+        </div>
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">🏫</div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+          <span class="text-muted">Enrolment</span>
+          <span style="font-weight:600;color:{{ 'var(--red)' if pct >= 100 else ('var(--yellow)' if pct >= 80 else 'var(--green)') }}">{{ item.count }} / {{ s.capacity }}</span>
+        </div>
+        <div class="progress"><div class="progress-bar {{ 'pb-red' if pct >= 100 else ('pb-yellow' if pct >= 80 else 'pb-green') }}" style="width:{{ pct }}%"></div></div>
+      </div>
+      {% if s.class_teacher %}
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
+        <i class="fa-solid fa-chalkboard-user" style="color:var(--accent);margin-right:6px"></i>{{ s.class_teacher.full_name }}
+      </div>
+      {% endif %}
+      <div style="display:flex;gap:8px">
+        <a href="{{ url_for('students') }}?stream_id={{ s.id }}" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center"><i class="fa-solid fa-users"></i> Students</a>
+        <a href="{{ url_for('timetable') }}?stream_id={{ s.id }}" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center"><i class="fa-solid fa-table-cells"></i> Timetable</a>
+        {% if session.role == 'superadmin' %}
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_stream', id=s.id) }}','Delete {{ s.name }}?','Only possible if no active students. This removes the stream permanently.')"><i class="fa-solid fa-trash"></i></button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card" style="grid-column:1/-1"><div class="empty-state"><i class="fa-solid fa-layer-group"></i><p>No streams found.</p></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

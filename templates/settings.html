@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}School Settings{% endblock %}
+{% block page_title %}School Settings{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px">
+  <div class="card-header"><div class="card-title">School Information</div></div>
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid" style="margin-bottom:20px">
+        <div class="form-group" style="grid-column:span 2"><label class="form-label">School Name *</label><input type="text" name="name" class="form-control" value="{{ school.name if school else '' }}" required></div>
+        <div class="form-group" style="grid-column:span 2"><label class="form-label">Motto / Tagline</label><input type="text" name="motto" class="form-control" value="{{ school.motto if school else '' }}" placeholder="e.g. Excellence Through Innovation"></div>
+        <div class="form-group"><label class="form-label">Principal Name</label><input type="text" name="principal" class="form-control" value="{{ school.principal if school else '' }}"></div>
+        <div class="form-group"><label class="form-label">Founded Year</label><input type="number" name="founded" class="form-control" value="{{ school.founded if school else '' }}" placeholder="e.g. 1985"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-control" value="{{ school.phone if school else '' }}"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="{{ school.email if school else '' }}"></div>
+        <div class="form-group" style="grid-column:span 2"><label class="form-label">Address</label><textarea name="address" class="form-control" rows="2">{{ school.address if school else '' }}</textarea></div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Settings</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

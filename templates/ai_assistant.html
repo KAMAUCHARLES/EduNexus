@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}AI Teaching Assistant{% endblock %}
+{% block page_title %}AI Teaching Assistant{% endblock %}
+{% block extra_css %}
+<style>
+/* Response markdown-like rendering */
+.ai-response{
+  background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius);
+  padding:28px;font-size:14px;line-height:1.8;color:var(--text);
+  white-space:pre-wrap;word-wrap:break-word;
+  font-family:'DM Sans',sans-serif;
+  box-shadow:var(--shadow)
+}
+.ai-response h1,.ai-response h2,.ai-response h3{
+  font-family:'Syne',sans-serif;color:var(--green-700);margin:18px 0 8px;
+}
+.ai-response h1{font-size:20px;border-bottom:2px solid var(--green-200);padding-bottom:6px}
+.ai-response h2{font-size:17px}
+.ai-response h3{font-size:15px;color:var(--green-600)}
+.ai-response strong,.ai-response b{color:var(--green-700);font-weight:700}
+.ai-response ul,.ai-response ol{margin:8px 0 8px 22px}
+.ai-response li{margin-bottom:4px}
+.ai-response table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13px}
+.ai-response table th{background:var(--green-50);color:var(--green-700);padding:8px 12px;border:1.5px solid var(--green-200);font-weight:700;text-align:left}
+.ai-response table td{padding:7px 12px;border:1px solid var(--border);vertical-align:top}
+.ai-response table tr:nth-child(even){background:var(--green-50)}
+.ai-response code{background:var(--green-50);border:1px solid var(--green-200);border-radius:4px;padding:1px 6px;font-size:12.5px;color:var(--green-700)}
+.ai-response blockquote{border-left:3px solid var(--green-400);padding:8px 16px;background:var(--green-50);border-radius:0 8px 8px 0;color:var(--green-700);margin:12px 0}
+.ai-response hr{border:none;border-top:1.5px solid var(--green-200);margin:16px 0}
+
+.task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:6px}
+.task-btn{
+  padding:10px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);
+  background:#fff;cursor:pointer;font-size:12.5px;font-weight:600;
+  color:var(--text2);transition:all .18s;text-align:left;display:flex;align-items:center;gap:8px;
+  font-family:'DM Sans',sans-serif
+}
+.task-btn:hover{border-color:var(--green-400);background:var(--green-50);color:var(--green-700)}
+.task-btn.selected{border-color:var(--green-500);background:var(--green-100);color:var(--green-800);font-weight:700}
+.task-btn .t-emoji{font-size:18px;flex-shrink:0}
+
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.copy-btn{
+  position:sticky;top:8px;float:right;
+  background:var(--green-500);color:#fff;border:none;border-radius:7px;
+  padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .2s;z-index:10
+}
+.copy-btn:hover{background:var(--green-600)}
+.copy-btn.copied{background:#2563eb}
+.pdf-btn{background:#1f4e79; margin-right:8px}
+.pdf-btn:hover{background:#0e3a5c}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="gap:24px;align-items:flex-start">
+
+  <!-- ── LEFT: Input Form ──────────────────────────────────────────── -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:38px;height:38px;background:var(--green-500);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">🤖</div>
+          <div>
+            <div class="card-title">AI Teaching Assistant</div>
+            <div class="text-muted">CBC-aligned · Kenya Curriculum · Groq AI</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="POST" id="aiForm" onsubmit="onSubmit()">
+
+          <!-- Task picker -->
+          <div class="form-group" style="margin-bottom:18px">
+            <label class="form-label">What do you need?</label>
+            <div class="task-grid">
+              {% set tasks = [
+                ('lesson_plan','📋','Lesson Plan'),
+                ('scheme','📅','Scheme of Work'),
+                ('notes','📝','Student Notes'),
+                ('exam','📄','Exam / Quiz'),
+                ('marking_scheme','✅','Marking Scheme'),
+                ('homework','📚','Homework'),
+                ('activity','🎯','Classroom Activity'),
+                ('revision','🔄','Revision Materials'),
+                ('report_comments','💬','Report Comments'),
+                ('parent_letter','✉️','Parent Letter'),
+                ('performance','📊','Performance Analysis'),
+                ('remedial','🛠️','Remedial Plan'),
+              ] %}
+              {% for val,emoji,label in tasks %}
+              <button type="button" class="task-btn {% if form_data.get('task', 'lesson_plan') == val %}selected{% endif %}"
+                      data-val="{{ val }}" onclick="selectTask(this,'{{ val }}')">
+                <span class="t-emoji">{{ emoji }}</span>{{ label }}
+              </button>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="task" id="taskInput" value="{{ form_data.get('task','lesson_plan') }}">
+          </div>
+
+          <!-- Subject & Grade -->
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group">
+              <label class="form-label">Subject</label>
+              <input type="text" name="subject" class="form-control"
+                     value="{{ form_data.get('subject','') }}"
+                     placeholder="e.g. Mathematics, English, Science">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Grade / Class</label>
+              <select name="grade" class="form-control">
+                <option value="">Select grade...</option>
+                {% for g in ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7 (JSS 1)','Grade 8 (JSS 2)','Grade 9 (JSS 3)','Form 1','Form 2','Form 3','Form 4'] %}
+                <option value="{{ g }}" {{ 'selected' if form_data.get('grade')==g }}>{{ g }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Topic -->
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Topic / Unit</label>
+            <input type="text" name="topic" class="form-control"
+                   value="{{ form_data.get('topic','') }}"
+                   placeholder="e.g. Fractions, Photosynthesis, Narrative Writing">
+          </div>
+
+          <!-- Duration & Objectives -->
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group">
+              <label class="form-label">Lesson Duration</label>
+              <select name="duration" class="form-control">
+                {% for d in ['35 minutes','40 minutes','45 minutes','60 minutes','80 minutes','Double period (80 min)'] %}
+                <option {{ 'selected' if form_data.get('duration','40 minutes')==d }}>{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Learning Objectives <span class="text-muted">(optional)</span></label>
+              <input type="text" name="objectives" class="form-control"
+                     value="{{ form_data.get('objectives','') }}"
+                     placeholder="e.g. Solve linear equations">
+            </div>
+          </div>
+
+          <!-- Extra instructions -->
+          <div class="form-group" style="margin-bottom:20px">
+            <label class="form-label">Additional Instructions <span class="text-muted">(optional)</span></label>
+            <textarea name="extra" class="form-control" style="min-height:72px"
+                      placeholder="e.g. Include a hands-on activity, class has 45 students, limited resources, differentiate for slow learners...">{{ form_data.get('extra','') }}</textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-full" id="submitBtn" style="justify-content:center;font-size:15px;padding:12px">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Generate with AI
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Capabilities card -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><div class="card-title">💡 What this AI knows</div></div>
+      <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        {% for item in ['CBC strand & sub-strand structure','Grade 1–9 lower secondary content','Form 1–4 secondary curriculum','Kenya scheme of work format','KNEC exam style questions','Competency-Based Assessment (CBA)','Differentiated instruction','Low-resource classroom adaptations'] %}
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2)">
+          <i class="fa-solid fa-check" style="color:var(--green-500);flex-shrink:0;font-size:11px"></i>{{ item }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Output ─────────────────────────────────────────────── -->
+  <div>
+    {% if error %}
+    <div class="card" style="border-color:rgba(230,57,70,0.3)">
+      <div class="card-header" style="background:#fff0f0">
+        <div class="card-title" style="color:var(--red)"><i class="fa-solid fa-circle-xmark" style="margin-right:8px"></i>Error</div>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--red);font-size:14px">{{ error }}</p>
+        {% if 'not installed' in error %}
+        <div class="info-box green" style="margin-top:12px">
+          Run in your terminal: <code>pip install groq</code>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% elif response %}
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-sparkles" style="color:var(--green-500);margin-right:8px"></i>Generated Content</div>
+        <div style="display:flex;gap:8px">
+          <button class="copy-btn pdf-btn" id="downloadPdfBtn" onclick="downloadPDF()">
+            <i class="fa-solid fa-file-pdf"></i> Download PDF
+          </button>
+          <button class="copy-btn" id="copyBtn" onclick="copyResponse()">
+            <i class="fa-solid fa-copy"></i> Copy
+          </button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <!-- Display the rendered HTML (same as before) -->
+        <div class="ai-response" id="responseContent">{{ response }}</div>
+        <!-- Hidden raw markdown – used for PDF generation -->
+        <div id="rawResponse" style="display:none;">{{ response | escape }}</div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Empty state / hero -->
+    <div class="card" style="border-style:dashed;border-width:2px">
+      <div class="card-body" style="text-align:center;padding:48px 28px">
+        <div style="font-size:56px;margin-bottom:16px">🤖</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--green-700);margin-bottom:10px">Ready to assist</div>
+        <p style="color:var(--text3);font-size:14px;max-width:320px;margin:0 auto 24px;line-height:1.6">
+          Select what you need, fill in the details, and get professional CBC-aligned teaching materials in seconds.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto;text-align:left">
+          {% for step,label in [('1','Choose the type of content'),('2','Set subject, grade & topic'),('3','Click Generate')] %}
+          <div style="display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--text2)">
+            <div style="width:26px;height:26px;border-radius:50%;background:var(--green-500);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:12px;flex-shrink:0">{{ step }}</div>
+            {{ label }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample outputs showcase -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><div class="card-title">📌 Example Prompts</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+        {% for subject,grade,topic,task_name in [
+          ('Mathematics','Grade 6','Fractions — Addition and Subtraction','lesson_plan'),
+          ('English','Form 2','Narrative Writing','exam'),
+          ('Science','Grade 4','The Water Cycle','notes'),
+          ('Kiswahili','Grade 8 (JSS 2)','Uandishi wa Barua','marking_scheme'),
+          ('Biology','Form 3','Cell Division — Mitosis','revision'),
+        ] %}
+        <button type="button"
+                onclick="fillExample('{{ subject }}','{{ grade }}','{{ topic }}','{{ task_name }}')"
+                style="text-align:left;background:var(--green-50);border:1.5px solid var(--green-200);border-radius:8px;padding:10px 14px;cursor:pointer;font-size:12.5px;font-family:'DM Sans',sans-serif;transition:background .15s;color:var(--green-800)">
+          <strong>{{ subject }}</strong> · {{ grade }} · {{ topic }}
+          <span style="float:right;font-size:11px;color:var(--green-500)">{{ task_name|replace('_',' ')|title }} →</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var selected = '{{ form_data.get("task","lesson_plan") }}';
+
+function selectTask(btn, val) {
+  document.querySelectorAll('.task-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('taskInput').value = val;
+  selected = val;
+}
+
+function onSubmit() {
+  var btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Generating...';
+  btn.disabled = true;
+}
+
+function copyResponse() {
+  var text = document.getElementById('responseContent').innerText;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById('copyBtn');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy';
+      btn.classList.remove('copied');
+    }, 2500);
+  });
+}
+
+function downloadPDF() {
+  // Get the raw markdown from the hidden div (if it exists)
+  var rawDiv = document.getElementById('rawResponse');
+  var content = rawDiv ? rawDiv.innerText : document.getElementById('responseContent').innerHTML;
+  
+  var task = document.getElementById('taskInput').value;
+  var subject = document.querySelector('[name=subject]').value;
+  var grade = document.querySelector('[name=grade]').value;
+  var topic = document.querySelector('[name=topic]').value;
+
+  fetch('/download-pdf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      content: content,      // raw markdown (best for PDF conversion)
+      task: task,
+      subject: subject,
+      grade: grade,
+      topic: topic
+    })
+  })
+  .then(response => response.blob())
+  .then(blob => {
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'ai_generated_content.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  })
+  .catch(err => {
+    alert('Failed to generate PDF: ' + err);
+  });
+}
+
+function fillExample(subject, grade, topic, task) {
+  document.querySelector('[name=subject]').value = subject;
+  document.querySelector('[name=topic]').value = topic;
+  var sel = document.querySelector('[name=grade]');
+  for (var i=0; i<sel.options.length; i++) {
+    if (sel.options[i].value === grade) { sel.selectedIndex = i; break; }
+  }
+  document.querySelectorAll('.task-btn').forEach(function(b) {
+    if (b.dataset.val === task) { b.click(); }
+  });
+  document.querySelector('.card').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var el = document.getElementById('responseContent');
+  if (!el) return;
+  var html = el.innerHTML;
+  // Convert markdown-like syntax to HTML for on‑screen display (keep existing)
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/^---+$/gm, '<hr>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  el.innerHTML = html;
+});
+</script>
+{% endblock %}

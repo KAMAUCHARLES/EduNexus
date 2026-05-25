@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Children's Assignments{% endblock %}
+{% block page_title %}My Children's Assignments{% endblock %}
+{% block content %}
+{% if children_data %}
+  {% for item in children_data %}
+  {% set child = item.student %}
+  {% set submitted_ids = item.submitted %}
+  {% set total = item.assignments|length %}
+  {% set submitted_count = submitted_ids|length %}
+  {% set pending = total - submitted_count %}
+  <div style="margin-bottom:28px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)">
+      <div class="avatar avatar-lg" style="background:{{ child.user.avatar_color }}">{{ child.user.full_name[0] }}</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800">{{ child.user.full_name }}</div>
+        <div class="text-muted">{{ child.stream.name if child.stream else 'No stream' }} · {{ child.adm_no }}</div>
+      </div>
+      <div class="ml-auto" style="text-align:right">
+        {% if pending > 0 %}
+        <span class="badge badge-yellow"><i class="fa-solid fa-triangle-exclamation"></i> {{ pending }} Pending</span>
+        {% else %}
+        <span class="badge badge-green"><i class="fa-solid fa-check"></i> All Submitted</span>
+        {% endif %}
+        <div class="text-muted" style="margin-top:4px">{{ total }} total assignment{{ 's' if total != 1 }}</div>
+      </div>
+    </div>
+
+    {% if item.assignments %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      {% for a in item.assignments %}
+      {% set is_submitted = a.id in submitted_ids %}
+      {% set is_overdue = a.due_date < date.today() and not is_submitted %}
+      <div class="card">
+        <div style="height:3px;background:{{ 'var(--green)' if is_submitted else ('var(--red)' if is_overdue else ('var(--yellow)' if (a.due_date - date.today()).days <= 3 else 'var(--accent)')) }}"></div>
+        <div class="card-body" style="padding:14px">
+          <div style="font-weight:600;font-size:13.5px;margin-bottom:6px">{{ a.title }}</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+            <span class="badge badge-blue">{{ a.subject.name }}</span>
+            <span class="badge badge-{{ 'green' if is_submitted else ('red' if is_overdue else 'gray') }}">
+              {{ 'Submitted ✓' if is_submitted else ('Overdue' if is_overdue else 'Pending') }}
+            </span>
+          </div>
+          <div style="font-size:11px;color:var(--text3)">
+            <i class="fa-solid fa-calendar" style="margin-right:4px"></i>Due {{ a.due_date.strftime('%d %b %Y') }}
+            &nbsp;·&nbsp;
+            <i class="fa-solid fa-star" style="margin-right:4px"></i>{{ a.max_marks }} marks
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="empty-state" style="padding:24px"><p>No assignments posted for this class yet</p></div></div>
+    {% endif %}
+  </div>
+  {% if not loop.last %}<hr class="divider">{% endif %}
+  {% endfor %}
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-children"></i><p>No children linked to your account. Contact the school admin.</p></div></div>
+{% endif %}
+{% endblock %}

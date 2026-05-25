@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Subjects{% endblock %}
+{% block page_title %}Subjects{% endblock %}
+{% block topbar_actions %}
+{% if session.role in ('superadmin','admin') %}
+<a href="{{ url_for('add_subject') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Subject</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">{{ subjects|length }} Subject{{ 's' if subjects|length != 1 }}</div></div>
+  {% if subjects %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Subject</th><th>Code</th><th>Category</th><th>Type</th><th></th></tr></thead>
+      <tbody>
+        {% for s in subjects %}
+        <tr>
+          <td style="font-weight:600">{{ s.name }}</td>
+          <td><span class="badge badge-gray">{{ s.code }}</span></td>
+          <td>{{ s.category or '—' }}</td>
+          <td><span class="badge badge-{{ 'blue' if s.is_compulsory else 'purple' }}">{{ 'Compulsory' if s.is_compulsory else 'Optional' }}</span></td>
+          <td>
+            {% if session.role == 'superadmin' %}
+            <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_subject', id=s.id) }}','Delete {{ s.name }}?','This will remove the subject from all exams and results.')"><i class="fa-solid fa-trash"></i></button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa-solid fa-book-open"></i><p>No subjects added. <a href="{{ url_for('add_subject') }}" class="link">Add one →</a></p></div>
+  {% endif %}
+</div>
+{% endblock %}

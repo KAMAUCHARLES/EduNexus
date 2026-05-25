@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Message{% endblock %}
+{% block page_title %}Message{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('messages') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>{% endblock %}
+{% block content %}
+{% if message %}
+<div class="card" style="max-width:700px">
+  <div class="card-header">
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800">{{ message.subject or '(No subject)' }}</div>
+    <span class="badge badge-{{ 'blue' if message.is_read else 'yellow' }}">{{ 'Read' if message.is_read else 'Unread' }}</span>
+  </div>
+  <div class="card-body">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div class="avatar avatar-lg" style="background:{{ message.sender.avatar_color }}">{{ message.sender.full_name[0] }}</div>
+      <div>
+        <div style="font-weight:600;font-size:15px">{{ message.sender.full_name }}</div>
+        <div class="text-muted">{{ message.sender.email }}</div>
+        <div class="text-muted">{{ message.created_at.strftime('%A, %d %B %Y at %I:%M %p') }}</div>
+      </div>
+    </div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.8;white-space:pre-wrap;margin-bottom:24px">{{ message.body }}</div>
+    <div style="display:flex;gap:10px">
+      <a href="{{ url_for('send_message') }}" class="btn btn-primary"><i class="fa-solid fa-reply"></i> Reply</a>
+      {% if is_superadmin() or (current_user() and message.recipient_id == current_user().id) %}
+      <button class="btn btn-danger" onclick="confirmDelete('{{ url_for('delete_message', id=message.id) }}','Delete Message?','Remove this message permanently?')">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-envelope"></i><p>Message not found.</p></div></div>
+{% endif %}
+{% endblock %}

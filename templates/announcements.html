@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Announcements{% endblock %}
+{% block page_title %}Announcements{% endblock %}
+{% block topbar_actions %}
+{% if session.role in ('superadmin','admin','teacher') %}
+<a href="{{ url_for('add_announcement') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Post</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+{% if announcements %}
+<div style="display:flex;flex-direction:column;gap:14px">
+  {% for ann in announcements %}
+  {% set color = 'red' if ann.priority=='urgent' else ('yellow' if ann.priority=='high' else 'blue') %}
+  <div class="card">
+    <div style="height:3px;background:var(--{{ color }})"></div>
+    <div class="card-body">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+            <span class="badge badge-{{ color }}">{{ ann.priority|upper }}</span>
+            <span class="badge badge-gray">{{ ann.audience|title }}</span>
+            {% if ann.author %}<span class="text-muted"><i class="fa-solid fa-user" style="margin-right:4px"></i>{{ ann.author.full_name }}</span>{% endif %}
+            <span class="text-muted"><i class="fa-solid fa-clock" style="margin-right:4px"></i>{{ ann.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:8px">{{ ann.title }}</div>
+          <div style="font-size:13.5px;color:var(--text2);line-height:1.7">{{ ann.content }}</div>
+        </div>
+        {% if session.role in ('superadmin','admin') %}
+        <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="confirmDelete('{{ url_for('delete_announcement', id=ann.id) }}','Delete Announcement?','Remove this announcement permanently?')"><i class="fa-solid fa-trash"></i></button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-bullhorn"></i><p>No announcements yet.{% if session.role in ('superadmin','admin','teacher') %} <a href="{{ url_for('add_announcement') }}" class="link">Post one →</a>{% endif %}</p></div></div>
+{% endif %}
+{% endblock %}

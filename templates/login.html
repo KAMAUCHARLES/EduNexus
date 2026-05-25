@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduNexus — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root{--g9:#003d1f;--g7:#00692a;--g5:#00873e;--g3:#3db870;--g1:#d9f2e3;--g05:#f0fbf4;--text:#1a2e21;--text2:#3d5a47;--text3:#7a9a83;--red:#e63946;--radius:12px}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--g05);color:var(--text);min-height:100vh;display:flex}
+
+    /* ── Left decorative panel ── */
+    .left{
+      flex:1;
+      background:linear-gradient(160deg, var(--g9) 0%, var(--g7) 50%, var(--g5) 100%);
+      display:flex;flex-direction:column;justify-content:center;align-items:center;
+      padding:60px;position:relative;overflow:hidden
+    }
+    /* Big decorative circles */
+    .left::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;border:2px solid rgba(255,255,255,0.08);top:50%;left:50%;transform:translate(-50%,-50%)}
+    .left::after{content:'';position:absolute;width:320px;height:320px;border-radius:50%;border:2px solid rgba(255,255,255,0.06);top:50%;left:50%;transform:translate(-50%,-50%)}
+    .panel-content{position:relative;z-index:1;max-width:400px;text-align:left}
+    .big-logo{width:72px;height:72px;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:28px;box-shadow:0 8px 28px rgba(0,0,0,0.2)}
+    .panel-headline{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;line-height:1.1;margin-bottom:14px;color:#fff}
+    .panel-sub{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:40px}
+    .feature-list{display:flex;flex-direction:column;gap:12px}
+    .feature-item{display:flex;align-items:center;gap:14px;padding:12px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px}
+    .fi-icon{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .fi-title{font-size:13px;font-weight:600;color:#fff}.fi-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px}
+    /* Zeraki branding strip */
+    .zeraki-badge{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 16px;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.5px}
+
+    /* ── Right login form ── */
+    .right{width:460px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:60px 48px;background:#fff;border-left:1.5px solid var(--g1)}
+    .login-box{width:100%}
+    .login-header{margin-bottom:32px}
+    .login-header h1{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:6px;color:var(--g9)}
+    .login-header p{color:var(--text3);font-size:14px}
+    .form-group{margin-bottom:18px}
+    .form-label{display:block;font-size:11.5px;font-weight:700;color:var(--g7);margin-bottom:7px;letter-spacing:0.2px}
+    .input-wrap{position:relative}
+    .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px}
+    .form-input{width:100%;background:var(--g05);border:1.5px solid rgba(0,135,62,0.2);border-radius:9px;padding:11px 13px 11px 40px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .form-input:focus{outline:none;border-color:var(--g5);box-shadow:0 0 0 3px rgba(0,135,62,0.1);background:#fff}
+    .form-input::placeholder{color:var(--text3)}
+    .submit-btn{width:100%;background:linear-gradient(135deg,var(--g7),var(--g5));border:none;border-radius:9px;padding:12px;color:#fff;font-size:15px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:all .2s;margin-top:6px;box-shadow:0 4px 14px rgba(0,135,62,0.3)}
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,135,62,0.4)}
+    .demo-creds{margin-top:26px;background:var(--g05);border:1.5px solid var(--g1);border-radius:10px;padding:14px}
+    .demo-title{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
+    .cred-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--g1);font-size:12.5px}
+    .cred-row:last-child{border:none;padding-bottom:0}
+    .cred-role{color:var(--text2);font-weight:500}
+    .cred-btn{background:#fff;border:1.5px solid var(--g1);border-radius:6px;padding:4px 10px;color:var(--g7);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+    .cred-btn:hover{background:var(--g1);border-color:var(--g3)}
+    .flash{padding:11px 14px;border-radius:9px;font-size:13px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+    .flash-error{background:#fff0f0;border:1.5px solid #fecaca;color:var(--red)}
+    @media(max-width:900px){.left{display:none}.right{width:100%;padding:40px 24px}}
+  </style>
+</head>
+<body>
+<div class="left">
+  <div class="panel-content">
+    <div class="big-logo">🎓</div>
+    <div class="panel-headline">Kenya's Smartest<br>School Platform</div>
+    <p class="panel-sub">Managing students, grades, timetables, attendance, assignments, and communication — all in one place. Built for Kenyan schools.</p>
+    <div class="feature-list">
+      <div class="feature-item"><div class="fi-icon">📊</div><div><div class="fi-title">CBC-Aligned Results</div><div class="fi-sub">Grade tracking per subject & strand</div></div></div>
+      <div class="feature-item"><div class="fi-icon">✅</div><div><div class="fi-title">Smart Attendance</div><div class="fi-sub">Daily register with parent visibility</div></div></div>
+      <div class="feature-item"><div class="fi-icon">🤖</div><div><div class="fi-title">AI Teaching Assistant</div><div class="fi-sub">Lesson plans, notes & marking schemes</div></div></div>
+    </div>
+  </div>
+  <div class="zeraki-badge">Zeraki-style School Management</div>
+</div>
+
+<div class="right">
+  <div class="login-box">
+    <div class="login-header">
+      <h1>Welcome back 👋</h1>
+      <p>Sign in to your EduNexus account</p>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat,msg in messages %}
+      <div class="flash flash-{{ cat }}"><i class="fa-solid fa-circle-xmark"></i> {{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div class="input-wrap"><i class="fa-solid fa-user input-icon"></i><input type="text" name="username" class="form-input" placeholder="Enter your username" required autofocus id="u-input"/></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap"><i class="fa-solid fa-lock input-icon"></i><input type="password" name="password" class="form-input" placeholder="Enter your password" required id="p-input"/></div>
+      </div>
+      <button type="submit" class="submit-btn">Sign In to EduNexus →</button>
+    </form>
+    <div class="demo-creds">
+      <div class="demo-title">🧪 Demo Accounts</div>
+      <div class="cred-row"><span class="cred-role">🔑 Superadmin</span><button class="cred-btn" onclick="fill('superadmin','super123')">Use</button></div>
+      <div class="cred-row"><span class="cred-role">🛡️ Admin</span><button class="cred-btn" onclick="fill('admin','admin123')">Use</button></div>
+      <div class="cred-row"><span class="cred-role">👩‍🏫 Teacher</span><button class="cred-btn" onclick="fill('teacher1','teacher123')">Use</button></div>
+      <div class="cred-row"><span class="cred-role">🎒 Student</span><button class="cred-btn" onclick="fill('adm20241000','student123')">Use</button></div>
+      <div class="cred-row"><span class="cred-role">👨‍👩‍👧 Parent</span><button class="cred-btn" onclick="fill('parent1','parent123')">Use</button></div>
+    </div>
+  </div>
+</div>
+<script>function fill(u,p){document.getElementById('u-input').value=u;document.getElementById('p-input').value=p;}</script>
+</body>
+</html>

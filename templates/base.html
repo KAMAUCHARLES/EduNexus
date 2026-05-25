@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}EduNexus{% endblock %} — Smart School OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    /* ═══════════════════════════════════════════
+       ZERAKI THEME — Green & White
+    ═══════════════════════════════════════════ */
+    :root{
+      /* Brand greens */
+      --green-900:#003d1f;
+      --green-800:#00521a;
+      --green-700:#00692a;  /* primary dark */
+      --green-600:#007a31;
+      --green-500:#00873e;  /* ← Zeraki primary */
+      --green-400:#1a9e52;
+      --green-300:#3db870;
+      --green-200:#a8dfbb;
+      --green-100:#d9f2e3;
+      --green-50:#f0fbf4;
+
+      /* Aliases used through templates */
+      --accent:var(--green-500);
+      --accent2:#1e7a45;
+      --green:var(--green-500);
+
+      /* UI surface — clean whites & very light greens */
+      --bg:#f4f8f5;
+      --bg2:#ffffff;
+      --bg3:#edf6f0;
+      --card:#ffffff;
+      --card2:#f9fdfb;
+      --border:rgba(0,135,62,0.12);
+      --border2:rgba(0,135,62,0.22);
+
+      /* Text */
+      --text:#1a2e21;
+      --text2:#3d5a47;
+      --text3:#7a9a83;
+
+      /* Semantic colours */
+      --red:#e63946;
+      --yellow:#f4a261;
+      --orange:#e76f51;
+      --pink:#e07fa0;
+      --accent-light:#e8f7ee;
+
+      --radius:14px;
+      --radius-sm:8px;
+      --shadow:0 4px 20px rgba(0,135,62,0.10);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+
+    /* Subtle green dot-grid background */
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:radial-gradient(circle,rgba(0,135,62,0.07) 1px,transparent 1px);
+      background-size:28px 28px;
+      pointer-events:none;z-index:0
+    }
+
+    /* ── SIDEBAR ───────────────────────────────────────────────── */
+    .sidebar{
+      width:260px;min-height:100vh;
+      background:var(--green-700);
+      border-right:none;
+      display:flex;flex-direction:column;
+      position:fixed;left:0;top:0;bottom:0;z-index:100;
+      transition:transform .3s ease;overflow-y:auto;
+      box-shadow:4px 0 20px rgba(0,0,0,0.12)
+    }
+    .sidebar-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.12);flex-shrink:0}
+    .logo-mark{display:flex;align-items:center;gap:12px;text-decoration:none}
+    .logo-icon{
+      width:42px;height:42px;
+      background:rgba(255,255,255,0.15);
+      border:2px solid rgba(255,255,255,0.3);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;
+      font-size:20px;flex-shrink:0
+    }
+    .logo-text .brand{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+    .logo-text .tagline{font-size:10px;color:rgba(255,255,255,0.6);margin-top:1px}
+
+    .role-pill{
+      margin:10px 14px 0;padding:6px 12px;border-radius:8px;
+      font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+      display:flex;align-items:center;gap:8px;
+      background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);
+      border:1px solid rgba(255,255,255,0.18)
+    }
+
+    .nav-section{padding:10px;flex:1}
+    .nav-label{
+      font-size:9.5px;font-weight:700;letter-spacing:1.5px;
+      color:rgba(255,255,255,0.45);text-transform:uppercase;
+      padding:0 10px;margin:14px 0 5px
+    }
+    .nav-item{
+      display:flex;align-items:center;gap:11px;
+      padding:9px 10px;border-radius:var(--radius-sm);
+      text-decoration:none;color:rgba(255,255,255,0.75);
+      font-size:13px;font-weight:500;transition:all .18s;
+      position:relative;margin-bottom:1px
+    }
+    .nav-item:hover{background:rgba(255,255,255,0.1);color:#fff}
+    .nav-item.active{background:rgba(255,255,255,0.18);color:#fff;font-weight:700}
+    .nav-item.active::before{
+      content:'';position:absolute;left:0;top:18%;bottom:18%;
+      width:3px;border-radius:2px;background:#fff
+    }
+    .nav-item .icon{width:17px;text-align:center;font-size:13px;flex-shrink:0}
+    .nav-divider{border:none;border-top:1px solid rgba(255,255,255,0.1);margin:6px 0}
+
+    .sidebar-footer{padding:10px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0}
+    .user-card{
+      display:flex;align-items:center;gap:10px;
+      padding:9px 11px;border-radius:var(--radius-sm);
+      background:rgba(255,255,255,0.1);
+      text-decoration:none;color:rgba(255,255,255,0.85);
+      transition:background .18s
+    }
+    .user-card:hover{background:rgba(255,255,255,0.18)}
+    .avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0}
+    .avatar-lg{width:48px;height:48px;font-size:18px}
+    .avatar-xl{width:72px;height:72px;font-size:26px}
+    .user-info .name{font-size:13px;font-weight:600;color:#fff}
+    .user-info .role{font-size:11px;color:rgba(255,255,255,0.5);text-transform:capitalize}
+
+    /* ── MAIN ──────────────────────────────────────────────────── */
+    .main{margin-left:260px;flex:1;display:flex;flex-direction:column;position:relative;z-index:1}
+    .topbar{
+      position:sticky;top:0;z-index:50;
+      background:rgba(255,255,255,0.92);
+      backdrop-filter:blur(12px);
+      border-bottom:2px solid var(--green-200);
+      padding:0 26px;height:58px;
+      display:flex;align-items:center;gap:14px;
+      box-shadow:0 2px 12px rgba(0,135,62,0.08)
+    }
+    .topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;flex:1;color:var(--green-700)}
+    .topbar-actions{display:flex;align-items:center;gap:10px}
+    .content{padding:26px;flex:1}
+
+    /* ── BUTTONS ───────────────────────────────────────────────── */
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'DM Sans',sans-serif}
+    .btn-primary{background:var(--green-500);color:#fff;box-shadow:0 2px 8px rgba(0,135,62,0.25)}
+    .btn-primary:hover{background:var(--green-600);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,135,62,0.35)}
+    .btn-ghost{background:#fff;color:var(--text2);border:1.5px solid var(--border2)}
+    .btn-ghost:hover{background:var(--green-50);color:var(--green-700);border-color:var(--green-300)}
+    .btn-danger{background:#fff0f0;color:var(--red);border:1.5px solid rgba(230,57,70,0.3)}
+    .btn-danger:hover{background:rgba(230,57,70,0.1)}
+    .btn-success{background:var(--green-50);color:var(--green-600);border:1.5px solid var(--green-300)}
+    .btn-success:hover{background:var(--green-100)}
+    .btn-warning{background:#fff8f0;color:var(--orange);border:1.5px solid rgba(231,111,81,0.3)}
+    .btn-sm{padding:5px 12px;font-size:12px}
+    .btn-xs{padding:3px 9px;font-size:11px}
+
+    /* ── FLASH ─────────────────────────────────────────────────── */
+    .flash-container{padding:0 26px;margin-top:12px}
+    .flash{padding:10px 15px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;animation:slideIn .3s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+    .flash-success{background:var(--green-50);border:1.5px solid var(--green-300);color:var(--green-700)}
+    .flash-error{background:#fff0f0;border:1.5px solid rgba(230,57,70,0.3);color:var(--red)}
+    .flash-info{background:#f0f7ff;border:1.5px solid rgba(79,142,247,0.25);color:#2563eb}
+
+    /* ── CARDS ─────────────────────────────────────────────────── */
+    .card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+    .card-header{padding:16px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--green-50)}
+    .card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--green-700)}
+
+    .card-body{padding:20px}
+
+    /* ── STAT CARDS ────────────────────────────────────────────── */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:14px;margin-bottom:22px}
+    .stat-card{
+      background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);
+      padding:18px 18px;position:relative;overflow:hidden;
+      transition:transform .2s,box-shadow .2s;
+      box-shadow:var(--shadow)
+    }
+    .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,135,62,0.14)}
+    .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius) var(--radius) 0 0}
+    .stat-card.blue::after{background:#2563eb}
+    .stat-card.green::after{background:var(--green-500)}
+    .stat-card.yellow::after{background:var(--yellow)}
+    .stat-card.red::after{background:var(--red)}
+    .stat-card.purple::after{background:#7c3aed}
+    .stat-card.pink::after{background:var(--pink)}
+    .stat-card.orange::after{background:var(--orange)}
+    .stat-label{font-size:10.5px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+    .stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin:5px 0 3px}
+    .stat-card.blue .stat-value{color:#2563eb}
+    .stat-card.green .stat-value{color:var(--green-500)}
+    .stat-card.yellow .stat-value{color:var(--yellow)}
+    .stat-card.red .stat-value{color:var(--red)}
+    .stat-card.purple .stat-value{color:#7c3aed}
+    .stat-card.pink .stat-value{color:var(--pink)}
+    .stat-card.orange .stat-value{color:var(--orange)}
+    .stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:0.06}
+    .stat-sub{font-size:10.5px;color:var(--text3)}
+
+    /* ── TABLE ─────────────────────────────────────────────────── */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{padding:10px 13px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.6px;color:var(--green-600);text-transform:uppercase;border-bottom:2px solid var(--green-200);background:var(--green-50)}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+    tbody tr:hover{background:var(--green-50)}
+    tbody td{padding:11px 13px;color:var(--text2)}
+    tbody td:first-child{color:var(--text)}
+
+    /* ── BADGES ────────────────────────────────────────────────── */
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+    .badge-blue{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
+    .badge-green{background:var(--green-100);color:var(--green-700);border:1px solid var(--green-300)}
+    .badge-yellow{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
+    .badge-red{background:#fff0f0;color:var(--red);border:1px solid #fecaca}
+    .badge-purple{background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe}
+    .badge-gray{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+    .badge-orange{background:#fff7ed;color:var(--orange);border:1px solid #fed7aa}
+    .badge-pink{background:#fdf2f8;color:var(--pink);border:1px solid #fbcfe8}
+
+    /* ── FORMS ─────────────────────────────────────────────────── */
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .form-group{display:flex;flex-direction:column;gap:5px}
+    .form-label{font-size:11.5px;font-weight:700;color:var(--green-700);letter-spacing:0.2px}
+    .form-control{
+      background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius-sm);
+      padding:9px 13px;color:var(--text);font-size:13px;
+      font-family:'DM Sans',sans-serif;transition:border-color .2s,box-shadow .2s;width:100%
+    }
+    .form-control:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(0,135,62,0.1)}
+    select.form-control option{background:#fff}
+    textarea.form-control{resize:vertical;min-height:90px}
+    .form-check{display:flex;align-items:center;gap:10px;padding:7px 0}
+    .form-check input[type=checkbox]{width:15px;height:15px;accent-color:var(--green-500);cursor:pointer}
+    .form-check label{font-size:13px;color:var(--text2);cursor:pointer}
+
+    /* ── PROGRESS ──────────────────────────────────────────────── */
+    .progress{background:var(--green-100);border-radius:20px;height:6px;overflow:hidden}
+    .progress-bar{height:100%;border-radius:20px;transition:width .6s ease}
+    .pb-blue{background:#2563eb}.pb-green{background:var(--green-500)}.pb-red{background:var(--red)}.pb-yellow{background:var(--yellow)}
+
+    /* ── GRADE COLOURS ─────────────────────────────────────────── */
+    .grade-A{color:var(--green-500);font-weight:700}
+    .grade-B{color:#2563eb;font-weight:700}
+    .grade-C{color:var(--yellow);font-weight:700}
+    .grade-D{color:var(--orange);font-weight:700}
+    .grade-E{color:var(--red);font-weight:700}
+
+    /* ── MISC ──────────────────────────────────────────────────── */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+    .empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
+    .empty-state i{font-size:40px;margin-bottom:12px;opacity:0.25;display:block;color:var(--green-400)}
+    .divider{border:none;border-top:1.5px solid var(--border);margin:18px 0}
+    .text-muted{color:var(--text3);font-size:12px}
+    .flex{display:flex}.flex-center{display:flex;align-items:center}
+    .justify-between{justify-content:space-between}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+    .ml-auto{margin-left:auto}.w-full{width:100%}
+    .link{color:var(--green-600);text-decoration:none;font-weight:600}.link:hover{text-decoration:underline}
+    .mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}.mb-24{margin-bottom:24px}
+    .info-box{padding:12px 15px;border-radius:var(--radius-sm);font-size:13px}
+    .info-box.blue{background:#f0f7ff;border:1.5px solid #bfdbfe;color:#1d4ed8}
+    .info-box.red{background:#fff0f0;border:1.5px solid #fecaca;color:var(--red)}
+    .info-box.green{background:var(--green-50);border:1.5px solid var(--green-200);color:var(--green-700)}
+    .info-box.yellow{background:#fffbeb;border:1.5px solid #fde68a;color:#92400e}
+    .perm-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin:2px}
+    .perm-tag.on{background:var(--green-100);color:var(--green-700);border:1px solid var(--green-300)}
+    .perm-tag.off{background:#f3f4f6;color:#9ca3af;border:1px solid #e5e7eb}
+
+    /* ── AI CHAT BUBBLE (floating) ─────────────────────────────── */
+    .ai-fab{
+      position:fixed;bottom:28px;right:28px;z-index:200;
+      width:56px;height:56px;border-radius:50%;
+      background:var(--green-500);
+      color:#fff;border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;
+      box-shadow:0 6px 20px rgba(0,135,62,0.4);
+      transition:transform .2s,box-shadow .2s
+    }
+    .ai-fab:hover{transform:scale(1.08);box-shadow:0 8px 28px rgba(0,135,62,0.5)}
+    .ai-pulse{
+      position:absolute;top:-3px;right:-3px;
+      width:14px;height:14px;border-radius:50%;
+      background:#ff4d6d;border:2px solid #fff;
+      animation:pulse 2s infinite
+    }
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+
+    /* ── HAMBURGER ─────────────────────────────────────────────── */
+    .hamburger{display:none;background:none;border:none;color:var(--green-700);font-size:20px;cursor:pointer}
+
+    /* ── DELETE MODAL ──────────────────────────────────────────── */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius);padding:30px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+    .modal h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:10px;color:var(--red)}
+    .modal p{color:var(--text2);font-size:13.5px;margin-bottom:22px;line-height:1.5}
+    .modal-actions{display:flex;gap:12px;justify-content:center}
+
+    @media(max-width:900px){
+      .sidebar{transform:translateX(-260px)}.sidebar.open{transform:translateX(0)}
+      .main{margin-left:0}.hamburger{display:block}
+      .grid-2,.grid-3{grid-template-columns:1fr}
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────────────── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="{{ url_for('dashboard') }}" class="logo-mark">
+      <div class="logo-icon">🎓</div>
+      <div class="logo-text"><div class="brand">EduNexus</div><div class="tagline">Smart School OS</div></div>
+    </a>
+  </div>
+  {% set role = session.get('role','') %}
+  <div class="role-pill">
+    <i class="fa-solid fa-{{ 'crown' if role=='superadmin' else ('shield-halved' if role=='admin' else ('chalkboard-user' if role=='teacher' else ('graduation-cap' if role=='student' else 'users'))) }}"></i>
+    {{ 'Super Admin' if role=='superadmin' else role|title }}
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint=='dashboard' %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-grid-2"></i></span>Dashboard
+    </a>
+    <a href="{{ url_for('announcements') }}" class="nav-item {% if 'announcement' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-bullhorn"></i></span>Announcements
+    </a>
+    <a href="{{ url_for('events') }}" class="nav-item {% if 'event' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-calendar-days"></i></span>Events
+    </a>
+
+    {% if role in ('superadmin','admin','teacher') %}
+    <hr class="nav-divider">
+    <div class="nav-label">Academics</div>
+    <a href="{{ url_for('students') }}" class="nav-item {% if 'student' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-users"></i></span>Students
+    </a>
+    {% if role in ('superadmin','admin') %}
+    <a href="{{ url_for('streams') }}" class="nav-item {% if 'stream' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-layer-group"></i></span>Streams
+    </a>
+    <a href="{{ url_for('subjects') }}" class="nav-item {% if 'subject' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-book-open"></i></span>Subjects
+    </a>
+    <a href="{{ url_for('teachers') }}" class="nav-item {% if request.endpoint in ('teachers','add_teacher','assign_teacher') %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-chalkboard-user"></i></span>Teachers
+    </a>
+    {% endif %}
+    <a href="{{ url_for('timetable') }}" class="nav-item {% if 'timetable' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-table-cells"></i></span>Timetable
+    </a>
+    {% endif %}
+
+    {% if role in ('student','parent') %}
+    <hr class="nav-divider">
+    <div class="nav-label">My School</div>
+    <a href="{{ url_for('timetable') }}" class="nav-item {% if 'timetable' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-table-cells"></i></span>Timetable
+    </a>
+    {% endif %}
+
+    <hr class="nav-divider">
+    <div class="nav-label">Performance</div>
+    <a href="{{ url_for('exams') }}" class="nav-item {% if request.endpoint in ('exams','add_exam') %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-file-pen"></i></span>Exams
+    </a>
+    {% if role in ('superadmin','admin','teacher') %}
+    <a href="{{ url_for('results_view') }}" class="nav-item {% if request.endpoint=='results_view' %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-chart-bar"></i></span>Results
+    </a>
+    <a href="{{ url_for('enter_results') }}" class="nav-item {% if request.endpoint=='enter_results' %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-keyboard"></i></span>Enter Marks
+    </a>
+    <a href="{{ url_for('attendance') }}" class="nav-item {% if 'attendance' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-clipboard-check"></i></span>Attendance
+    </a>
+    {% endif %}
+
+    <hr class="nav-divider">
+    <div class="nav-label">Assignments</div>
+    <a href="{{ url_for('assignments') }}" class="nav-item {% if request.endpoint in ('assignments','view_assignment') %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-book-bookmark"></i></span>Assignments
+    </a>
+    {% if role in ('superadmin','admin','teacher') %}
+    <a href="{{ url_for('add_assignment') }}" class="nav-item {% if request.endpoint=='add_assignment' %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-circle-plus"></i></span>Post Assignment
+    </a>
+    {% endif %}
+
+    <hr class="nav-divider">
+    <div class="nav-label">Communication</div>
+    <a href="{{ url_for('messages') }}" class="nav-item {% if 'message' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-envelope"></i></span>Messages
+    </a>
+    {% if role in ('superadmin','admin','teacher') %}
+    <a href="{{ url_for('ai_assistant') }}" class="nav-item {% if 'ai_assistant' in request.endpoint %}active{% endif %}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15)">
+      <span class="icon">🤖</span>AI Teaching Assistant
+      <span class="nav-badge" style="background:var(--green-300);color:var(--green-900)">NEW</span>
+    </a>
+    {% endif %}
+
+    {% if role == 'superadmin' %}
+    <hr class="nav-divider">
+    <div class="nav-label">⚡ Superadmin</div>
+    <a href="{{ url_for('admins') }}" class="nav-item {% if request.endpoint in ('admins','add_admin','edit_admin') %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-user-shield"></i></span>Manage Admins
+    </a>
+    <a href="{{ url_for('settings') }}" class="nav-item {% if 'settings' in request.endpoint %}active{% endif %}">
+      <span class="icon"><i class="fa-solid fa-gear"></i></span>School Settings
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="sidebar-footer">
+    {% set u = current_user() %}{% if u %}
+    <a href="{{ url_for('profile') }}" class="user-card">
+      <div class="avatar" style="background:{{ u.avatar_color }}">{{ u.full_name[0] }}</div>
+      <div class="user-info"><div class="name">{{ u.full_name.split()[0] }}</div><div class="role">{{ u.role }}</div></div>
+      <i class="fa-solid fa-chevron-right" style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.4)"></i>
+    </a>{% endif %}
+    <a href="{{ url_for('logout') }}" class="nav-item" style="margin-top:6px;color:rgba(255,100,100,0.9)">
+      <span class="icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>Sign Out
+    </a>
+  </div>
+</nav>
+
+<!-- ── MAIN ────────────────────────────────────────────────────────── -->
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+    <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+    <div class="topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}
+  <div class="flash-container">
+    {% for cat,msg in messages %}
+    <div class="flash flash-{{ 'success' if cat=='success' else ('error' if cat=='error' else 'info') }}">
+      <i class="fa-solid fa-{{ 'circle-check' if cat=='success' else ('circle-xmark' if cat=='error' else 'circle-info') }}"></i>{{ msg }}
+    </div>{% endfor %}
+  </div>{% endif %}{% endwith %}
+  <div class="content">{% block content %}{% endblock %}</div>
+</div>
+
+<!-- ── AI FAB (teachers + admins only) ─────────────────────────────── -->
+{% if session.get('role') in ('superadmin','admin','teacher') %}
+<button class="ai-fab" onclick="window.location='{{ url_for('ai_assistant') }}'" title="AI Teaching Assistant">
+  🤖
+  <span class="ai-pulse"></span>
+</button>
+{% endif %}
+
+<!-- ── Delete Confirm Modal ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div style="font-size:36px;margin-bottom:10px">⚠️</div>
+    <h3 id="modalTitle">Confirm Delete</h3>
+    <p id="modalMsg">This action cannot be undone. Are you sure you want to proceed?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <form id="deleteForm" method="POST" style="display:inline">
+        <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(url, title, msg) {
+  document.getElementById('modalTitle').textContent = title || 'Confirm Delete';
+  document.getElementById('modalMsg').textContent = msg || 'This action cannot be undone.';
+  document.getElementById('deleteForm').action = url;
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeModal() { document.getElementById('deleteModal').classList.remove('show'); }
+document.getElementById('deleteModal').addEventListener('click', e => { if(e.target===document.getElementById('deleteModal')) closeModal(); });
+setTimeout(() => { document.querySelectorAll('.flash').forEach(el => { el.style.transition='opacity .5s'; el.style.opacity='0'; setTimeout(()=>el.remove(),500); }); }, 4500);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

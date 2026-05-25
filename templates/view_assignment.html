@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{{ assignment.title }}{% endblock %}
+{% block page_title %}Assignment Details{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('assignments') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>
+{% if session.role in ('superadmin','teacher') and (session.role == 'superadmin' or assignment.teacher_id == current_user().id) %}
+<button class="btn btn-danger" onclick="confirmDelete('{{ url_for('delete_assignment', id=assignment.id) }}','Delete Assignment?','All submissions will also be deleted.')"><i class="fa-solid fa-trash"></i> Delete</button>
+{% endif %}
+{% endblock %}
+{% block content %}
+{% if assignment %}
+<div class="grid-2" style="margin-bottom:22px">
+  <div class="card">
+    <div class="card-body">
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:10px">{{ assignment.title }}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <span class="badge badge-blue">{{ assignment.subject.name }}</span>
+        <span class="badge badge-purple">{{ assignment.stream.name }}</span>
+        <span class="badge badge-{{ 'red' if assignment.due_date < date.today() else 'green' }}">
+          Due {{ assignment.due_date.strftime('%d %b %Y') }}
+        </span>
+      </div>
+      <div style="font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:16px">{{ assignment.description }}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">{{ assignment.max_marks }}</div>
+          <div class="text-muted">Max Marks</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--green)">{{ submissions|length }}</div>
+          <div class="text-muted">Submitted</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--yellow)">{{ students_in_stream|length - submitted_ids|length }}</div>
+          <div class="text-muted">Pending</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Assignment Info</div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="text-muted">Posted By</span><span style="font-weight:600">{{ assignment.teacher.full_name }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="text-muted">Stream</span><span style="font-weight:600">{{ assignment.stream.name }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="text-muted">Due Date</span>
+        <span style="font-weight:600;color:{{ 'var(--red)' if assignment.due_date < date.today() else 'var(--text)' }}">{{ assignment.due_date.strftime('%A, %d %B %Y') }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:8px 0">
+        <span class="text-muted">Created</span><span style="font-weight:600">{{ assignment.created_at.strftime('%d %b %Y') }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if session.role in ('superadmin','admin','teacher') %}
+<div class="card">
+  <div class="card-header"><div class="card-title">Submissions ({{ submissions|length }} / {{ students_in_stream|length }})</div></div>
+  {% if submissions %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Submitted At</th><th>Status</th><th>Notes</th><th>File</th><th>Marks</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for sub in submissions %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="avatar" style="background:{{ sub.student.user.avatar_color }};width:28px;height:28px;font-size:11px">{{ sub.student.user.full_name[0] }}</div>
+              <div>
+                <div style="font-weight:600;font-size:13px">{{ sub.student.user.full_name }}</div>
+                <div class="text-muted">{{ sub.student.adm_no }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="text-muted">{{ sub.submitted_at.strftime('%d %b %Y, %H:%M') }}</td>
+          <td>
+            <span class="badge badge-{{ 'green' if sub.status=='graded' else ('orange' if sub.status=='late' else 'blue') }}">
+              {{ sub.status|title }}
+            </span>
+          </td>
+          <td style="font-size:12px;color:var(--text2)">{{ sub.notes[:60] if sub.notes else '—' }}{% if sub.notes and sub.notes|length > 60 %}...{% endif %}</td>
+          <td>
+            {% if sub.file_path %}
+            <a href="{{ url_for('serve_upload', filename=sub.file_path) }}"
+               class="btn btn-ghost btn-xs" style="display:inline-flex;align-items:center;gap:5px">
+              <i class="{{ file_icon(sub.file_name) }}" style="color:{{ file_color(sub.file_name) }}"></i>
+              <span style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ sub.file_name }}</span>
+              <i class="fa-solid fa-download" style="font-size:10px"></i>
+            </a>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if sub.marks_awarded is not none %}
+            <span style="font-weight:700;color:var(--green)">{{ sub.marks_awarded }}/{{ assignment.max_marks }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if sub.status != 'graded' and (session.role in ('superadmin','admin') or assignment.teacher_id == current_user().id) %}
+            <form method="POST" action="{{ url_for('grade_submission', id=sub.id) }}" style="display:flex;gap:6px;align-items:center">
+              <input type="number" name="marks" class="form-control" style="width:70px;padding:5px 8px" min="0" max="{{ assignment.max_marks }}" placeholder="0-{{ assignment.max_marks }}" required>
+              <button type="submit" class="btn btn-success btn-sm">Grade</button>
+            </form>
+            {% else %}
+              {% if sub.status == 'graded' %}<span class="text-muted" style="font-size:12px">✓ Graded</span>{% else %}—{% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa-solid fa-inbox"></i><p>No submissions yet</p></div>
+  {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="card"><div class="empty-state"><p>Assignment not found.</p></div></div>
+{% endif %}
+{% endblock %}

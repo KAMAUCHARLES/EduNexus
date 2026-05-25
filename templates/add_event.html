@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Add Event{% endblock %}
+{% block page_title %}Add Event{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('events') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:640px">
+  <div class="card-body">
+    <form method="POST">
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:18px">
+        <div class="form-group"><label class="form-label">Event Title *</label><input type="text" name="title" class="form-control" required placeholder="e.g. Annual Sports Day"></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Date *</label>
+            <input type="date" name="event_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select name="event_type" class="form-control">
+              <option value="academic">Academic</option>
+              <option value="sports">Sports</option>
+              <option value="cultural">Cultural</option>
+              <option value="holiday">Holiday</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Venue</label><input type="text" name="venue" class="form-control" placeholder="e.g. School Grounds, Main Hall"></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="4" placeholder="Event description..."></textarea></div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-calendar-plus"></i> Add Event</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

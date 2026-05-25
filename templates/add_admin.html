@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Add Admin{% endblock %}
+{% block page_title %}Create Limited Admin{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('admins') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Account Details</div></div>
+    <div class="card-body">
+      <form method="POST">
+        <div class="form-grid" style="margin-bottom:18px">
+          <div class="form-group"><label class="form-label">Full Name *</label><input type="text" name="full_name" class="form-control" required placeholder="e.g. Jane Wanjiku"></div>
+          <div class="form-group"><label class="form-label">Username *</label><input type="text" name="username" class="form-control" required placeholder="unique username"></div>
+          <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" class="form-control" required placeholder="admin@school.ac.ke"></div>
+          <div class="form-group"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-control" placeholder="+254 700 000000"></div>
+          <div class="form-group" style="grid-column:span 2"><label class="form-label">Password *</label><input type="password" name="password" class="form-control" required placeholder="Set a strong password"></div>
+        </div>
+        <hr class="divider">
+        <div style="margin-bottom:14px">
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:4px">Permissions</div>
+          <div class="text-muted">Choose what this admin can manage. They cannot delete records — only Superadmin can.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:20px">
+          {% for label,name,desc in [
+            ('Manage Students','can_manage_students','Add & view students'),
+            ('Manage Teachers','can_manage_teachers','Add & view teachers'),
+            ('Manage Exams','can_manage_exams','Create exams & enter marks'),
+            ('Manage Attendance','can_manage_attendance','Record daily attendance'),
+            ('Post Announcements','can_manage_announcements','Create announcements'),
+            ('Edit Timetable','can_manage_timetable','Build class timetables'),
+            ('Manage Streams','can_manage_streams','Create & manage streams')
+          ] %}
+          <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+            <input type="checkbox" id="{{ name }}" name="{{ name }}" checked>
+            <label for="{{ name }}"><strong>{{ label }}</strong><br><span class="text-muted">{{ desc }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-user-shield"></i> Create Admin Account</button>
+      </form>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">🔐 Permission Guide</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="info-box green"><i class="fa-solid fa-check" style="color:var(--green);margin-right:8px"></i>Limited admins <strong>can create</strong> records within their permitted areas.</div>
+        <div class="info-box red"><i class="fa-solid fa-xmark" style="color:var(--red);margin-right:8px"></i>Limited admins <strong>cannot delete</strong> anything. Only Superadmin can delete.</div>
+        <div class="info-box blue"><i class="fa-solid fa-info-circle" style="color:var(--accent);margin-right:8px"></i>Limited admins <strong>cannot manage</strong> other admin accounts or school settings.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

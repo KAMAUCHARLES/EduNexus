@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block page_title %}Students{% endblock %}
+{% block topbar_actions %}
+{% if session.role in ('superadmin','admin') %}
+<a href="{{ url_for('add_student') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Student</a>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card mb-20" style="margin-bottom:20px">
+  <div class="card-body" style="padding:16px 20px">
+    <form method="GET" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
+        <label class="form-label">Search</label>
+        <input type="text" name="q" value="{{ q }}" placeholder="Name or Admission No..." class="form-control">
+      </div>
+      <div class="form-group" style="min-width:180px;margin-bottom:0">
+        <label class="form-label">Stream</label>
+        <select name="stream_id" class="form-control">
+          <option value="">All Streams</option>
+          {% for s in streams %}<option value="{{ s.id }}" {% if selected_stream == s.id|string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <a href="{{ url_for('students') }}" class="btn btn-ghost">Reset</a>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">{{ students|length }} Student{{ 's' if students|length != 1 }}</div>
+    {% if session.role == 'teacher' %}
+    <span class="badge badge-green"><i class="fa-solid fa-eye"></i> Your Classes Only</span>
+    {% endif %}
+  </div>
+  {% if students %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Adm No.</th><th>Stream</th><th>Gender</th><th>KCPE</th><th>Joined</th><th></th></tr></thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="avatar" style="background:{{ s.user.avatar_color }}">{{ s.user.full_name[0] }}</div>
+              <div>
+                <div style="font-weight:600">{{ s.user.full_name }}</div>
+                <div class="text-muted">{{ s.user.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge badge-gray">{{ s.adm_no }}</span></td>
+          <td>{{ s.stream.name if s.stream else '—' }}</td>
+          <td><span class="badge badge-{{ 'blue' if s.gender=='Male' else 'pink' }}">{{ s.gender }}</span></td>
+          <td>{{ s.kcpe_marks or '—' }}</td>
+          <td class="text-muted">{{ s.joined_date.strftime('%d %b %Y') if s.joined_date else '—' }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="{{ url_for('student_profile', id=s.id) }}" class="btn btn-ghost btn-sm">Profile</a>
+              {% if session.role == 'superadmin' %}
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_student', id=s.id) }}','Remove {{ s.user.full_name }}?','This student will be deactivated and hidden from all views.')"><i class="fa-solid fa-trash"></i></button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa-solid fa-users"></i>
+    <p>No students found.{% if session.role in ('superadmin','admin') %} <a href="{{ url_for('add_student') }}" class="link">Add one →</a>{% endif %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

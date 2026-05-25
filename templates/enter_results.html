@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Enter Results{% endblock %}
+{% block page_title %}Enter Exam Marks{% endblock %}
+{% block extra_css %}
+<style>
+  .marks-input { width: 80px; text-align: center; }
+  .marks-input:focus { border-color: var(--accent); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-body">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;" id="filter-form">
+      <div class="form-group" style="margin-bottom:0;flex:1;min-width:160px;">
+        <label class="form-label">Exam *</label>
+        <select name="exam_id" class="form-control" onchange="this.form.submit()">
+          <option value="">Select Exam...</option>
+          {% for e in exams %}<option value="{{ e.id }}" {% if selected_exam == e.id|string %}selected{% endif %}>{{ e.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;flex:1;min-width:160px;">
+        <label class="form-label">Stream *</label>
+        <select name="stream_id" class="form-control" onchange="this.form.submit()">
+          <option value="">Select Stream...</option>
+          {% for s in streams %}<option value="{{ s.id }}" {% if selected_stream == s.id|string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;flex:1;min-width:160px;">
+        <label class="form-label">Subject *</label>
+        <select name="subject_id" class="form-control" onchange="this.form.submit()">
+          <option value="">Select Subject...</option>
+          {% for sub in subjects %}<option value="{{ sub.id }}" {% if request.args.get('subject_id') == sub.id|string %}selected{% endif %}>{{ sub.name }}</option>{% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if students %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Enter Marks (out of 100)</div>
+    <div style="font-size:12px;color:var(--text3)">{{ students|length }} students</div>
+  </div>
+  <form method="POST">
+    <input type="hidden" name="exam_id" value="{{ selected_exam }}">
+    <input type="hidden" name="stream_id" value="{{ selected_stream }}">
+    <input type="hidden" name="subject_id" value="{{ request.args.get('subject_id') }}">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Student</th><th>Adm No.</th><th>Marks (0–100)</th><th>Grade Preview</th></tr></thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td style="color:var(--text3)">{{ loop.index }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar" style="background:{{ s.user.avatar_color }};width:28px;height:28px;font-size:11px;">{{ s.user.full_name[0] }}</div>
+                {{ s.user.full_name }}
+              </div>
+            </td>
+            <td><span class="badge badge-gray">{{ s.adm_no }}</span></td>
+            <td>
+              <input type="number" name="marks_{{ s.id }}" class="form-control marks-input"
+                     min="0" max="100" step="0.5"
+                     value="{{ existing_results.get(s.id, '') }}"
+                     oninput="updateGrade(this, '{{ s.id }}')">
+            </td>
+            <td><span id="grade_{{ s.id }}" style="font-weight:700;font-size:15px;">
+              {% if s.id in existing_results %}
+                {% set m = existing_results[s.id] %}
+                <span class="grade-{{ 'A' if m >= 70 else ('B' if m >= 55 else ('C' if m >= 40 else 'D')) }}">
+                  {{ 'A' if m >= 80 else ('A-' if m >= 75 else ('B+' if m >= 70 else ('B' if m >= 65 else ('B-' if m >= 60 else ('C+' if m >= 55 else ('C' if m >= 50 else ('C-' if m >= 45 else ('D+' if m >= 40 else ('D' if m >= 35 else ('D-' if m >= 30 else 'E')))))))))) }}
+                </span>
+              {% else %}—{% endif %}
+            </span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:20px 24px;border-top:1px solid var(--border);display:flex;gap:12px;">
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Results</button>
+      <button type="button" class="btn btn-ghost" onclick="fillRandom()">🎲 Fill Random (Testing)</button>
+    </div>
+  </form>
+</div>
+{% elif selected_exam and selected_stream %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-users"></i><p>No students in this stream. <a href="{{ url_for('add_student') }}" class="link">Add students first.</a></p></div></div>
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-filter"></i><p>Select an exam, stream, and subject above to begin entering marks.</p></div></div>
+{% endif %}
+
+<script>
+const gradeMap = m => {
+  if(m>=80) return ['A','grade-A'];
+  if(m>=75) return ['A-','grade-A'];
+  if(m>=70) return ['B+','grade-B'];
+  if(m>=65) return ['B','grade-B'];
+  if(m>=60) return ['B-','grade-B'];
+  if(m>=55) return ['C+','grade-C'];
+  if(m>=50) return ['C','grade-C'];
+  if(m>=45) return ['C-','grade-C'];
+  if(m>=40) return ['D+','grade-D'];
+  if(m>=35) return ['D','grade-D'];
+  if(m>=30) return ['D-','grade-D'];
+  return ['E','grade-E'];
+};
+function updateGrade(inp, id) {
+  const el = document.getElementById('grade_'+id);
+  const v = parseFloat(inp.value);
+  if(!isNaN(v) && v>=0 && v<=100) {
+    const [g, cls] = gradeMap(v);
+    el.innerHTML = `<span class="${cls}">${g}</span>`;
+  } else { el.textContent = '—'; }
+}
+function fillRandom() {
+  document.querySelectorAll('[name^="marks_"]').forEach(inp => {
+    const v = (Math.random()*70+25).toFixed(1);
+    inp.value = v;
+    const id = inp.name.replace('marks_','');
+    updateGrade(inp, id);
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Add Teacher{% endblock %}
+{% block page_title %}Add Teacher{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('teachers') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px">
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid" style="margin-bottom:18px">
+        <div class="form-group"><label class="form-label">Full Name *</label><input type="text" name="full_name" class="form-control" required placeholder="e.g. Alice Mwangi"></div>
+        <div class="form-group"><label class="form-label">Email *</label><input type="email" name="email" class="form-control" required placeholder="teacher@school.ac.ke"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-control" placeholder="+254 700 000000"></div>
+      </div>
+      <div class="info-box green" style="margin-bottom:18px">
+        <i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:8px"></i>
+        Username is derived from the email. Default password: <strong>teacher123</strong>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-chalkboard-user"></i> Add Teacher</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

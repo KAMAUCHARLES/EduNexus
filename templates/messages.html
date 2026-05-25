@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block page_title %}Messages{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('send_message') }}" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> New Message</a>
+{% endblock %}
+{% block extra_css %}
+<style>
+.tab-btn{padding:8px 20px;border:none;background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:'DM Sans',sans-serif}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.msg-item{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);transition:background .15s;text-decoration:none;color:inherit}
+.msg-item:hover{background:rgba(255,255,255,0.02)}
+.msg-item.unread{background:rgba(79,142,247,0.04)}
+.msg-item.unread .msg-subject{color:var(--text);font-weight:700}
+.msg-subject{font-size:13.5px;font-weight:500;color:var(--text2);margin-bottom:3px}
+.msg-preview{font-size:12px;color:var(--text3)}
+</style>
+{% endblock %}
+{% block content %}
+{% if unread > 0 %}
+<div class="info-box blue mb-20" style="margin-bottom:16px">
+  <i class="fa-solid fa-envelope" style="color:var(--accent);margin-right:8px"></i>
+  You have <strong>{{ unread }} unread message{{ 's' if unread != 1 }}</strong>
+</div>
+{% endif %}
+<div class="card">
+  <div style="padding:4px 16px;border-bottom:1px solid var(--border);display:flex;gap:4px">
+    <button class="tab-btn active" id="tab-inbox" onclick="showTab('inbox')">
+      <i class="fa-solid fa-inbox"></i> Inbox ({{ inbox|length }})
+      {% if unread > 0 %}<span style="background:var(--red);color:white;font-size:10px;padding:1px 6px;border-radius:20px;margin-left:4px">{{ unread }}</span>{% endif %}
+    </button>
+    <button class="tab-btn" id="tab-sent" onclick="showTab('sent')"><i class="fa-solid fa-paper-plane"></i> Sent ({{ sent|length }})</button>
+  </div>
+
+  <div id="pane-inbox">
+    {% if inbox %}
+      {% for m in inbox %}
+      <div class="msg-item {{ 'unread' if not m.is_read }}">
+        <div class="avatar" style="background:{{ m.sender.avatar_color }};flex-shrink:0">{{ m.sender.full_name[0] }}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-size:13px;font-weight:600;color:var(--text)">{{ m.sender.full_name }}</span>
+            <span class="text-muted">{{ m.created_at.strftime('%d %b, %H:%M') }}</span>
+          </div>
+          <div class="msg-subject">{{ m.subject or '(No subject)' }}</div>
+          <div class="msg-preview">{{ m.body[:80] }}{% if m.body|length > 80 %}...{% endif %}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px">
+          <a href="{{ url_for('read_message', id=m.id) }}" class="btn btn-ghost btn-sm">Read</a>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_message', id=m.id) }}','Delete Message?','Remove this message permanently?')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Your inbox is empty</p></div>
+    {% endif %}
+  </div>
+
+  <div id="pane-sent" style="display:none">
+    {% if sent %}
+      {% for m in sent %}
+      <div class="msg-item">
+        <div class="avatar" style="background:var(--accent2);flex-shrink:0"><i class="fa-solid fa-paper-plane" style="font-size:12px"></i></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-size:13px;font-weight:600;color:var(--text2)">To: {{ m.recipient.full_name if m.recipient else 'Unknown' }}</span>
+            <span class="text-muted">{{ m.created_at.strftime('%d %b, %H:%M') }}</span>
+          </div>
+          <div class="msg-subject">{{ m.subject or '(No subject)' }}</div>
+          <div class="msg-preview">{{ m.body[:80] }}{% if m.body|length > 80 %}...{% endif %}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" style="flex-shrink:0;margin-left:12px" onclick="confirmDelete('{{ url_for('delete_message', id=m.id) }}','Delete Message?','Remove this sent message?')"><i class="fa-solid fa-trash"></i></button>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state"><i class="fa-solid fa-paper-plane"></i><p>No sent messages</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function showTab(tab) {
+  document.getElementById('pane-inbox').style.display = tab === 'inbox' ? 'block' : 'none';
+  document.getElementById('pane-sent').style.display = tab === 'sent' ? 'block' : 'none';
+  document.getElementById('tab-inbox').classList.toggle('active', tab === 'inbox');
+  document.getElementById('tab-sent').classList.toggle('active', tab === 'sent');
+}
+</script>
+{% endblock %}

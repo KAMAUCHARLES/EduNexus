@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Manage Admins{% endblock %}
+{% block page_title %}Limited Admin Accounts{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('add_admin') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Admin</a>
+{% endblock %}
+{% block content %}
+<div class="info-box blue mb-20">
+  <i class="fa-solid fa-circle-info" style="color:var(--accent);margin-right:8px"></i>
+  <strong>Limited admins</strong> can only access what you permit. Full delete rights stay with Superadmin only.
+</div>
+{% if admins %}
+<div class="card">
+  <div class="card-header"><div class="card-title">{{ admins|length }} Admin Account{{ 's' if admins|length!=1 }}</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Admin</th><th>Contact</th><th>Permissions</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for a in admins %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="avatar" style="background:{{ a.avatar_color }}">{{ a.full_name[0] }}</div>
+              <div><div style="font-weight:600">{{ a.full_name }}</div><div class="text-muted">@{{ a.username }}</div></div>
+            </div>
+          </td>
+          <td>{{ a.email }}<br><span class="text-muted">{{ a.phone or '—' }}</span></td>
+          <td>
+            <span class="perm-tag {{ 'on' if a.can_manage_students else 'off' }}"><i class="fa-solid fa-{{ 'check' if a.can_manage_students else 'xmark' }}"></i>Students</span>
+            <span class="perm-tag {{ 'on' if a.can_manage_teachers else 'off' }}"><i class="fa-solid fa-{{ 'check' if a.can_manage_teachers else 'xmark' }}"></i>Teachers</span>
+            <span class="perm-tag {{ 'on' if a.can_manage_exams else 'off' }}"><i class="fa-solid fa-{{ 'check' if a.can_manage_exams else 'xmark' }}"></i>Exams</span>
+            <span class="perm-tag {{ 'on' if a.can_manage_attendance else 'off' }}"><i class="fa-solid fa-{{ 'check' if a.can_manage_attendance else 'xmark' }}"></i>Attendance</span>
+            <span class="perm-tag {{ 'on' if a.can_manage_announcements else 'off' }}"><i class="fa-solid fa-{{ 'check' if a.can_manage_announcements else 'xmark' }}"></i>Notices</span>
+            <span class="perm-tag {{ 'on' if a.can_manage_timetable else 'off' }}"><i class="fa-solid fa-{{ 'check' if a.can_manage_timetable else 'xmark' }}"></i>Timetable</span>
+            <span class="perm-tag {{ 'on' if a.can_manage_streams else 'off' }}"><i class="fa-solid fa-{{ 'check' if a.can_manage_streams else 'xmark' }}"></i>Streams</span>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="{{ url_for('edit_admin', id=a.id) }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Edit</a>
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_admin', id=a.id) }}','Remove {{ a.full_name }}?','This will revoke their admin access immediately.')"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-user-shield"></i><p>No limited admins yet. <a href="{{ url_for('add_admin') }}" class="link">Create one →</a></p></div></div>
+{% endif %}
+{% endblock %}

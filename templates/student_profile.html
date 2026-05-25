@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}{{ student.user.full_name }}{% endblock %}
+{% block page_title %}Student Profile{% endblock %}
+{% block topbar_actions %}
+{% if session.role == 'student' %}
+<a href="{{ url_for('dashboard') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+{% elif session.role == 'parent' %}
+<a href="{{ url_for('dashboard') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>
+{% else %}
+<a href="{{ url_for('students') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Students</a>
+{% endif %}
+{% if is_superadmin() %}
+<button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_student', id=student.id) }}','Remove {{ student.user.full_name }}?','This will deactivate the student account. Records are preserved.')"><i class="fa-solid fa-trash"></i> Remove</button>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid-2" style="margin-bottom:22px">
+  <div class="card">
+    <div class="card-body" style="text-align:center;padding:32px">
+      <div class="avatar avatar-xl" style="background:{{ student.user.avatar_color }};margin:0 auto 14px">{{ student.user.full_name[0] }}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">{{ student.user.full_name }}</div>
+      <span class="badge badge-gray" style="margin-bottom:16px;display:inline-block">{{ student.adm_no }}</span>
+      <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:9px">
+        {% macro row(icon, color, label, value) %}
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--text3)"><i class="fa-solid fa-{{ icon }}" style="color:{{ color }};width:16px;margin-right:6px"></i>{{ label }}</span>
+          <span style="font-weight:600">{{ value }}</span>
+        </div>
+        {% endmacro %}
+        {{ row('layer-group','var(--accent)','Stream', student.stream.name if student.stream else '—') }}
+        {{ row('venus-mars','var(--pink)','Gender', student.gender or '—') }}
+        {{ row('cake-candles','var(--yellow)','Date of Birth', student.dob.strftime('%d %b %Y') if student.dob else '—') }}
+        {{ row('graduation-cap','var(--green)','KCPE Marks', student.kcpe_marks or '—') }}
+        {{ row('calendar','var(--text3)','Joined', student.joined_date.strftime('%d %b %Y') if student.joined_date else '—') }}
+        {% if student.parent %}{{ row('users','var(--orange)','Parent/Guardian', student.parent.full_name) }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Attendance Summary</div></div>
+    <div class="card-body">
+      {% set total_att = att_counts.present + att_counts.absent + att_counts.late + att_counts.excused %}
+      {% set pct = ((att_counts.present + att_counts.late) / total_att * 100)|round(1) if total_att > 0 else 0 %}
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:{{ 'var(--green)' if pct >= 80 else ('var(--yellow)' if pct >= 60 else 'var(--red)') }}">{{ pct }}%</div>
+        <div class="text-muted">Attendance Rate ({{ total_att }} school days)</div>
+        <div class="progress" style="margin-top:12px;height:8px">
+          <div class="progress-bar {{ 'pb-green' if pct >= 80 else ('pb-yellow' if pct >= 60 else 'pb-red') }}" style="width:{{ pct }}%"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        {% for label, key, color, icon in [('Present','present','green','check'),('Absent','absent','red','xmark'),('Late','late','yellow','clock'),('Excused','excused','blue','clipboard')] %}
+        <div style="background:rgba(var(--{{ color }}-rgb,0),0,0,0.08);border:1px solid rgba(0,0,0,0.05);border-radius:10px;padding:12px;text-align:center;background:var(--bg3);border-color:var(--border)">
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--{{ color }})">{{ att_counts.get(key,0) }}</div>
+          <div class="text-muted">{{ label }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Assignments section (visible to student, parent, teacher, admin) -->
+{% if assignments %}
+<div class="card" style="margin-bottom:22px">
+  <div class="card-header"><div class="card-title">Assignments — {{ student.stream.name if student.stream else '' }}</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Assignment</th><th>Subject</th><th>Teacher</th><th>Due Date</th><th>Max Marks</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for a in assignments %}
+        {% set sub = sub_map.get(a.id) %}
+        <tr>
+          <td style="font-weight:600">{{ a.title }}</td>
+          <td><span class="badge badge-blue">{{ a.subject.name }}</span></td>
+          <td>{{ a.teacher.full_name.split()[0] }}</td>
+          <td>{{ a.due_date.strftime('%d %b %Y') }}</td>
+          <td>{{ a.max_marks }}</td>
+          <td>
+            {% if sub %}
+              {% if sub.status=='graded' %}<span class="badge badge-green">Graded {{ sub.marks_awarded }}/{{ a.max_marks }}</span>
+              {% elif sub.status=='late' %}<span class="badge badge-orange">Late Submitted</span>
+              {% else %}<span class="badge badge-blue">Submitted</span>{% endif %}
+            {% elif a.due_date < date.today() %}<span class="badge badge-red">Overdue</span>
+            {% else %}<span class="badge badge-gray">Pending</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Exam Results -->
+<div class="card">
+  <div class="card-header"><div class="card-title">Academic Results</div></div>
+  {% if exam_results %}
+  <div class="card-body" style="display:flex;flex-direction:column;gap:24px">
+    {% for eid, data in exam_results.items() %}
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">{{ data.exam.name }}</div>
+          <div class="text-muted">{{ data.exam.term }} {{ data.exam.year }} · {{ data.exam.exam_type }}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--accent)">{{ data.avg }}</div>
+          <div class="text-muted">Average</div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Subject</th><th>Marks</th><th>Grade</th><th>Bar</th></tr></thead>
+        <tbody>
+          {% for r in data.subjects %}
+          <tr>
+            <td style="font-weight:600">{{ r.subject.name }}</td>
+            <td>{{ r.marks }}</td>
+            <td><span class="grade-{{ r.grade[0] }}">{{ r.grade }}</span></td>
+            <td style="width:200px">
+              <div class="progress">
+                <div class="progress-bar {{ 'pb-green' if r.marks >= 70 else ('pb-blue' if r.marks >= 50 else 'pb-red') }}" style="width:{{ r.marks }}%"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if not loop.last %}<hr class="divider">{% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa-solid fa-chart-bar"></i><p>No exam results recorded yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

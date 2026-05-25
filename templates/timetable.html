@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}Timetable{% endblock %}
+{% block page_title %}Class Timetable{% endblock %}
+{% block extra_css %}
+<style>
+.tt-table{width:100%;border-collapse:collapse;font-size:12px}
+.tt-table th{padding:10px 8px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.5px;
+  color:var(--accent2);text-transform:uppercase;background:var(--bg3);border:1.5px solid var(--border)}
+.tt-table td{padding:7px;border:1.5px solid var(--border);vertical-align:top;min-width:110px;background:#fff}
+.tt-cell{background:var(--accent-light);border:1.5px solid rgba(0,135,62,0.2);border-radius:7px;padding:7px 9px;position:relative}
+.tt-cell .subj{font-weight:700;font-size:12px;color:var(--accent2);margin-bottom:3px}
+.tt-cell .tchr{font-size:10px;color:var(--text3)}
+.tt-break{background:#fff8e1;border:1px solid rgba(245,166,35,0.3);border-radius:7px;padding:7px;
+  text-align:center;font-size:11px;color:#9a6200;font-weight:600}
+.tt-break.lunch{background:#e8f5ee;border-color:rgba(0,135,62,0.2);color:var(--accent2)}
+/* Editing selects */
+.tt-select{font-size:11px;padding:4px 6px;margin-bottom:3px;border-radius:5px;width:100%;
+  border:1.5px solid var(--border2);background:#fff;color:var(--text);font-family:'DM Sans',sans-serif}
+.tt-select:focus{outline:none;border-color:var(--accent)}
+/* Collision indicator on a cell */
+.collision-badge{display:none;position:absolute;top:-6px;right:-6px;width:18px;height:18px;
+  background:var(--red);border-radius:50%;align-items:center;justify-content:center;
+  font-size:9px;color:#fff;font-weight:800;z-index:10;cursor:help}
+.collision-badge.show{display:flex}
+.collision-row{display:none;font-size:10.5px;color:var(--red);padding:4px 6px;
+  background:#fdecea;border:1px solid rgba(230,57,70,0.2);border-radius:5px;margin-top:4px}
+.collision-row.show{display:block}
+/* Legend */
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:12px;height:12px;border-radius:3px}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stream selector -->
+<div class="card" style="margin-bottom:18px">
+  <div class="card-body" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:14px 18px">
+    <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
+      <label class="form-label">Select Stream</label>
+      <select class="form-control" onchange="window.location='?stream_id='+this.value">
+        <option value="">Choose a stream...</option>
+        {% for s in streams %}<option value="{{ s.id }}" {% if selected_stream==s.id|string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+      </select>
+    </div>
+    {% if is_super_or_admin() and selected_stream %}
+    <button class="btn btn-primary" id="editToggle" onclick="toggleEdit()">
+      <i class="fa-solid fa-pen"></i> Edit Timetable
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+{% if selected_stream %}
+<!-- Read-only timetable view -->
+<div class="card" id="viewCard">
+  <div class="card-header">
+    <div class="card-title">
+      {% for s in streams %}{% if s.id|string == selected_stream %}{{ s.name }}{% endif %}{% endfor %}
+      — Timetable
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-light);border:1.5px solid rgba(0,135,62,0.3)"></div><span>Class</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fff8e1;border:1px solid rgba(245,166,35,0.3)"></div><span>Break</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fdecea;border:1px solid rgba(230,57,70,0.3)"></div><span>Collision ⚠️</span></div>
+    </div>
+  </div>
+  <div class="card-body" style="overflow-x:auto;padding:16px">
+    <table class="tt-table">
+      <thead>
+        <tr>
+          <th style="width:80px">Period</th>
+          {% for day in days %}<th>{{ day }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for period in periods %}
+        <tr>
+          <td style="text-align:center;background:var(--bg3);font-size:10px;color:var(--text3);border:1.5px solid var(--border)">
+            <div style="font-weight:800;color:var(--accent2)">P{{ period }}</div>
+            <div>{{ period_times.get(period,'') }}</div>
+          </td>
+          {% if period == 4 %}
+          <td colspan="{{ days|length }}" style="background:#fff8e1;padding:6px;border:1.5px solid rgba(245,166,35,0.2)">
+            <div class="tt-break">☕ Short Break — 9:00 to 9:20 AM</div>
+          </td>
+          {% elif period == 7 %}
+          <td colspan="{{ days|length }}" style="background:#e8f5ee;padding:6px;border:1.5px solid rgba(0,135,62,0.15)">
+            <div class="tt-break lunch">🍽️ Lunch Break — 12:20 to 2:00 PM</div>
+          </td>
+          {% else %}
+          {% for day in days %}
+          {% set entry = timetable_data.get((day, period)) %}
+          <td>
+            {% if entry and entry.subject and entry.teacher %}
+            <div class="tt-cell">
+              <div class="subj">{{ entry.subject.name }}</div>
+              <div class="tchr"><i class="fa-solid fa-user-tie" style="margin-right:3px;color:var(--accent)"></i>{{ entry.teacher.full_name.split()[0] }}</div>
+            </div>
+            {% else %}
+            <div style="height:38px;display:flex;align-items:center;justify-content:center">
+              <span style="font-size:10px;color:var(--border2)">—</span>
+            </div>
+            {% endif %}
+          </td>
+          {% endfor %}
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if is_super_or_admin() %}
+<!-- Edit timetable form with live collision detection -->
+<div id="editCard" style="display:none;margin-top:20px">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-pen" style="margin-right:8px;color:var(--accent)"></i>Edit Timetable</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="collisionSummary" style="display:none;font-size:12px;color:var(--red);font-weight:600">
+          <i class="fa-solid fa-triangle-exclamation"></i> <span id="collisionCount">0</span> collision(s) detected
+        </div>
+        <span class="text-muted" style="font-size:12px"><i class="fa-solid fa-circle-info" style="color:var(--accent);margin-right:4px"></i>Conflicts highlighted in red</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('save_timetable') }}" id="ttForm" onsubmit="return confirmSave()">
+        <input type="hidden" name="stream_id" value="{{ selected_stream }}">
+        <div style="overflow-x:auto">
+          <table class="tt-table" style="min-width:750px">
+            <thead>
+              <tr>
+                <th style="width:55px">Period</th>
+                {% for day in days %}<th>{{ day }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for period in periods %}
+              <tr>
+                <td style="text-align:center;background:var(--bg3);font-size:11px;color:var(--accent2);font-weight:800;border:1.5px solid var(--border)">P{{ period }}</td>
+                {% if period == 4 %}
+                <td colspan="{{ days|length }}" style="background:#fff8e1;padding:8px;border:1.5px solid rgba(245,166,35,0.2)">
+                  <div class="tt-break">☕ Short Break</div>
+                </td>
+                {% elif period == 7 %}
+                <td colspan="{{ days|length }}" style="background:#e8f5ee;padding:8px;border:1.5px solid rgba(0,135,62,0.15)">
+                  <div class="tt-break lunch">🍽️ Lunch Break</div>
+                </td>
+                {% else %}
+                {% for day in days %}
+                {% set entry = timetable_data.get((day, period)) %}
+                <td>
+                  <div style="position:relative" id="cell-{{ day }}-{{ period }}">
+                    <div class="collision-badge" id="cbadge-{{ day }}-{{ period }}" title="">!</div>
+                    <select class="tt-select" name="{{ day }}_{{ period }}_subject"
+                            id="subj-{{ day }}-{{ period }}">
+                      <option value="">Subject</option>
+                      {% for s in subjects %}<option value="{{ s.id }}" {% if entry and entry.subject_id==s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+                    </select>
+                    <select class="tt-select" name="{{ day }}_{{ period }}_teacher"
+                            id="tchr-{{ day }}-{{ period }}"
+                            onchange="checkCollision('{{ day }}',{{ period }},this.value)">
+                      <option value="">Teacher</option>
+                      {% for t in teachers %}<option value="{{ t.id }}" {% if entry and entry.teacher_id==t.id %}selected{% endif %}>{{ t.full_name.split()[0] }}</option>{% endfor %}
+                    </select>
+                    <div class="collision-row" id="crow-{{ day }}-{{ period }}"></div>
+                  </div>
+                </td>
+                {% endfor %}
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:12px;align-items:center">
+          <button type="submit" class="btn btn-primary" id="saveBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Timetable
+          </button>
+          <button type="button" class="btn btn-ghost" onclick="toggleEdit()">Cancel</button>
+          <span class="text-muted" style="font-size:12px;margin-left:auto">
+            <i class="fa-solid fa-shield-halved" style="color:var(--accent);margin-right:4px"></i>
+            Saving is blocked if collisions exist
+          </span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-table-cells"></i><p>Select a stream above to view its timetable.</p></div></div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var STREAM_ID = "{{ selected_stream or '' }}";
+var activeCollisions = {};   // key: "day-period", value: message
+
+function toggleEdit() {
+  var edit = document.getElementById('editCard');
+  var view = document.getElementById('viewCard');
+  var btn  = document.getElementById('editToggle');
+  if (!edit) return;
+  var showing = edit.style.display !== 'none';
+  edit.style.display = showing ? 'none' : 'block';
+  view.style.opacity  = showing ? '1' : '0.4';
+  btn.innerHTML = showing
+    ? '<i class="fa-solid fa-pen"></i> Edit Timetable'
+    : '<i class="fa-solid fa-xmark"></i> Close Editor';
+}
+
+function checkCollision(day, period, teacherId) {
+  if (!teacherId) {
+    clearCollision(day, period);
+    return;
+  }
+  var url = '/timetable/check-collision?teacher_id=' + teacherId
+          + '&day=' + encodeURIComponent(day)
+          + '&period=' + period
+          + '&stream_id=' + STREAM_ID;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      var key = day + '-' + period;
+      if (data.collision) {
+        showCollision(day, period, data.message);
+      } else {
+        clearCollision(day, period);
+      }
+      updateCollisionSummary();
+    })
+    .catch(() => clearCollision(day, period));
+}
+
+function showCollision(day, period, msg) {
+  var key   = day + '-' + period;
+  var badge = document.getElementById('cbadge-' + day + '-' + period);
+  var crow  = document.getElementById('crow-'  + day + '-' + period);
+  var cell  = document.getElementById('cell-'  + day + '-' + period);
+  if (badge) { badge.classList.add('show'); badge.title = msg; }
+  if (crow)  { crow.classList.add('show'); crow.textContent = '⚠️ ' + msg; }
+  if (cell)  { cell.style.background = '#fdecea'; cell.style.borderRadius = '6px'; }
+  activeCollisions[key] = msg;
+}
+
+function clearCollision(day, period) {
+  var key   = day + '-' + period;
+  var badge = document.getElementById('cbadge-' + day + '-' + period);
+  var crow  = document.getElementById('crow-'  + day + '-' + period);
+  var cell  = document.getElementById('cell-'  + day + '-' + period);
+  if (badge) { badge.classList.remove('show'); badge.title = ''; }
+  if (crow)  { crow.classList.remove('show'); crow.textContent = ''; }
+  if (cell)  { cell.style.background = ''; cell.style.borderRadius = ''; }
+  delete activeCollisions[key];
+}
+
+function updateCollisionSummary() {
+  var count = Object.keys(activeCollisions).length;
+  var summary = document.getElementById('collisionSummary');
+  var countEl = document.getElementById('collisionCount');
+  var saveBtn = document.getElementById('saveBtn');
+  if (count > 0) {
+    summary.style.display = 'flex';
+    countEl.textContent   = count;
+    if (saveBtn) { saveBtn.style.opacity = '0.5'; }
+  } else {
+    summary.style.display = 'none';
+    if (saveBtn) { saveBtn.style.opacity = '1'; }
+  }
+}
+
+function confirmSave() {
+  var count = Object.keys(activeCollisions).length;
+  if (count > 0) {
+    alert('⚠️ Cannot save: ' + count + ' teacher collision(s) detected.\n\nPlease resolve all conflicts before saving.');
+    return false;
+  }
+  return true;
+}
+
+// Run collision check on all pre-filled teacher selects when edit panel opens
+document.addEventListener('DOMContentLoaded', function() {
+  // Check all teacher selects that already have a value (existing timetable)
+  document.querySelectorAll('[id^="tchr-"]').forEach(function(sel) {
+    if (sel.value) {
+      var parts = sel.id.replace('tchr-','').split('-');
+      var period = parseInt(parts[parts.length-1]);
+      var day    = parts.slice(0, parts.length-1).join('-');
+      checkCollision(day, period, sel.value);
+    }
+  });
+});
+</script>
+{% endblock %}

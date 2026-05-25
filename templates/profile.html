@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-body" style="text-align:center;padding:32px">
+      <div class="avatar avatar-xl" style="background:{{ user.avatar_color }};margin:0 auto 16px">{{ user.full_name[0] }}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">{{ user.full_name }}</div>
+      <span class="badge badge-{{ 'red' if user.role=='superadmin' else ('blue' if user.role=='admin' else ('green' if user.role=='teacher' else ('purple' if user.role=='student' else 'yellow'))) }}">{{ user.role|title }}</span>
+      <div style="margin-top:16px;font-size:13px;color:var(--text2);display:flex;flex-direction:column;gap:6px">
+        <div><i class="fa-solid fa-envelope" style="width:18px;color:var(--accent)"></i> {{ user.email }}</div>
+        <div><i class="fa-solid fa-phone" style="width:18px;color:var(--green)"></i> {{ user.phone or 'Not set' }}</div>
+        <div><i class="fa-solid fa-at" style="width:18px;color:var(--yellow)"></i> @{{ user.username }}</div>
+        <div><i class="fa-solid fa-calendar" style="width:18px;color:var(--text3)"></i> Joined {{ user.created_at.strftime('%B %Y') }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Edit Profile</div></div>
+    <div class="card-body">
+      <form method="POST">
+        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+          <div class="form-group"><label class="form-label">Full Name</label><input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required></div>
+          <div class="form-group"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="+254 700 000000"></div>
+        </div>
+        <hr class="divider">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:12px">Change Password</div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+          <div class="form-group"><label class="form-label">Current Password</label><input type="password" name="current_password" class="form-control"></div>
+          <div class="form-group"><label class="form-label">New Password</label><input type="password" name="new_password" class="form-control"></div>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Changes</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block page_title %}My Academic Summary{% endblock %}
+{% block content %}
+{% if student %}
+<div class="stats-grid">
+  <div class="stat-card blue"><i class="fa-solid fa-percent stat-icon"></i><div class="stat-label">Average Marks</div><div class="stat-value">{{ stats.avg_marks }}</div><div class="stat-sub">Overall performance</div></div>
+  <div class="stat-card green"><i class="fa-solid fa-calendar-check stat-icon"></i><div class="stat-label">Attendance</div><div class="stat-value">{{ stats.attendance_pct }}%</div><div class="stat-sub">Days present</div></div>
+  <div class="stat-card yellow"><i class="fa-solid fa-book-open stat-icon"></i><div class="stat-label">Subjects</div><div class="stat-value">{{ stats.subjects }}</div><div class="stat-sub">Enrolled</div></div>
+  <div class="stat-card purple"><i class="fa-solid fa-file-pen stat-icon"></i><div class="stat-label">Exams Taken</div><div class="stat-value">{{ stats.exams }}</div></div>
+  <div class="stat-card {{ 'red' if stats.pending_assignments > 0 else 'green' }}"><i class="fa-solid fa-book-bookmark stat-icon"></i><div class="stat-label">Pending Assignments</div><div class="stat-value">{{ stats.pending_assignments }}</div><div class="stat-sub">{{ 'Need attention!' if stats.pending_assignments > 0 else 'All submitted ✓' }}</div></div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">My Profile</div></div>
+    <div class="card-body" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div class="avatar avatar-xl" style="background:{{ student.user.avatar_color }}">{{ student.user.full_name[0] }}</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px">{{ student.user.full_name }}</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:4px"><i class="fa-solid fa-id-badge" style="color:var(--accent);margin-right:6px"></i>{{ student.adm_no }}</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:8px"><i class="fa-solid fa-layer-group" style="color:var(--green);margin-right:6px"></i>{{ student.stream.name if student.stream else 'Unassigned' }}</div>
+        <span class="badge badge-{{ 'blue' if student.gender=='Male' else 'pink' }}">{{ student.gender }}</span>
+      </div>
+    </div>
+    <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:8px">
+      <a href="{{ url_for('student_profile', id=student.id) }}" class="btn btn-ghost"><i class="fa-solid fa-chart-bar"></i> My Results</a>
+      <a href="{{ url_for('assignments') }}" class="btn btn-ghost"><i class="fa-solid fa-book-bookmark"></i> My Assignments</a>
+      <a href="{{ url_for('timetable') }}" class="btn btn-ghost"><i class="fa-solid fa-table-cells"></i> My Timetable</a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Announcements</div></div>
+    <div class="card-body" style="padding:0 20px">
+      {% for ann in announcements %}
+      <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+          <span class="badge badge-{{ 'red' if ann.priority=='urgent' else ('yellow' if ann.priority=='high' else 'blue') }}">{{ ann.priority }}</span>
+          <span style="font-weight:600;font-size:13.5px">{{ ann.title }}</span>
+        </div>
+        <div class="text-muted">{{ ann.content[:100] }}{% if ann.content|length > 100 %}...{% endif %}</div>
+      </div>
+      {% else %}<div class="empty-state" style="padding:24px"><p>No announcements</p></div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-user"></i><p>Student profile not found. Contact the admin.</p></div></div>
+{% endif %}
+{% endblock %}

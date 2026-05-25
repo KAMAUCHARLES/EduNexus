@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}All Assignments{% endblock %}
+{% block page_title %}All Assignments{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('add_assignment') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Post Assignment</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">{{ assignments|length }} Assignments</div></div>
+  {% if assignments %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Title</th><th>Subject</th><th>Stream</th><th>Teacher</th><th>Due Date</th><th>Max</th><th></th></tr></thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr>
+          <td style="font-weight:600">{{ a.title }}</td>
+          <td><span class="badge badge-blue">{{ a.subject.name }}</span></td>
+          <td>{{ a.stream.name }}</td>
+          <td>{{ a.teacher.full_name }}</td>
+          <td class="{{ 'text-muted' if a.due_date >= date.today() else '' }}" style="{{ 'color:var(--red)' if a.due_date < date.today() else '' }}">
+            {{ a.due_date.strftime('%d %b %Y') }}
+          </td>
+          <td>{{ a.max_marks }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="{{ url_for('view_assignment', id=a.id) }}" class="btn btn-ghost btn-sm">View</a>
+              {% if session.role == 'superadmin' %}
+              <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_assignment', id=a.id) }}','Delete Assignment?','All submissions will also be deleted.')"><i class="fa-solid fa-trash"></i></button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa-solid fa-book-bookmark"></i><p>No assignments posted yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

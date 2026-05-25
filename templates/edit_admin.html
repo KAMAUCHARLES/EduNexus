@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Edit Admin{% endblock %}
+{% block page_title %}Edit Admin Permissions{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('admins') }}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px">
+  <div class="card-header">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="avatar avatar-lg" style="background:{{ admin.avatar_color }}">{{ admin.full_name[0] }}</div>
+      <div><div class="card-title">{{ admin.full_name }}</div><div class="text-muted">@{{ admin.username }} · {{ admin.email }}</div></div>
+    </div>
+  </div>
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid" style="margin-bottom:18px">
+        <div class="form-group"><label class="form-label">Full Name</label><input type="text" name="full_name" class="form-control" value="{{ admin.full_name }}" required></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-control" value="{{ admin.phone or '' }}"></div>
+        <div class="form-group"><label class="form-label">New Password <span class="text-muted">(blank = unchanged)</span></label><input type="password" name="new_password" class="form-control" placeholder="New password"></div>
+      </div>
+      <hr class="divider">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px">Access Permissions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:22px">
+        <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+          <input type="checkbox" id="p1" name="can_manage_students" {{ 'checked' if admin.can_manage_students }}>
+          <label for="p1">Manage Students</label>
+        </div>
+        <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+          <input type="checkbox" id="p2" name="can_manage_teachers" {{ 'checked' if admin.can_manage_teachers }}>
+          <label for="p2">Manage Teachers</label>
+        </div>
+        <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+          <input type="checkbox" id="p3" name="can_manage_exams" {{ 'checked' if admin.can_manage_exams }}>
+          <label for="p3">Manage Exams</label>
+        </div>
+        <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+          <input type="checkbox" id="p4" name="can_manage_attendance" {{ 'checked' if admin.can_manage_attendance }}>
+          <label for="p4">Manage Attendance</label>
+        </div>
+        <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+          <input type="checkbox" id="p5" name="can_manage_announcements" {{ 'checked' if admin.can_manage_announcements }}>
+          <label for="p5">Post Announcements</label>
+        </div>
+        <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+          <input type="checkbox" id="p6" name="can_manage_timetable" {{ 'checked' if admin.can_manage_timetable }}>
+          <label for="p6">Edit Timetable</label>
+        </div>
+        <div class="form-check" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:0">
+          <input type="checkbox" id="p7" name="can_manage_streams" {{ 'checked' if admin.can_manage_streams }}>
+          <label for="p7">Manage Streams</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Changes</button>
+        <button type="button" class="btn btn-danger" onclick="confirmDelete('{{ url_for('delete_admin', id=admin.id) }}','Remove {{ admin.full_name }}?','This will revoke their admin access immediately.')">
+          <i class="fa-solid fa-trash"></i> Remove Admin
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

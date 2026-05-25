@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My Assignments{% endblock %}
+{% block page_title %}My Assignments{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('add_assignment') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Post Assignment</a>
+{% endblock %}
+{% block content %}
+{% if assignments %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px">
+  {% for a in assignments %}
+  {% set pending = pending_counts.get(a.id, 0) %}
+  <div class="card">
+    <div style="height:4px;background:linear-gradient(90deg,{{ 'var(--red)' if a.due_date < date.today() else ('var(--yellow)' if (a.due_date - date.today()).days <= 3 else 'var(--accent)') }},transparent)"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px">{{ a.title }}</div>
+          <span class="badge badge-blue">{{ a.subject.name }}</span>
+          <span class="badge badge-gray">{{ a.stream.name }}</span>
+        </div>
+        {% if a.due_date < date.today() %}
+        <span class="badge badge-red">Overdue</span>
+        {% elif (a.due_date - date.today()).days <= 3 %}
+        <span class="badge badge-yellow">Due Soon</span>
+        {% else %}
+        <span class="badge badge-green">Active</span>
+        {% endif %}
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5">{{ a.description[:100] }}{% if a.description|length > 100 %}...{% endif %}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:14px">
+        <span><i class="fa-solid fa-calendar-day" style="margin-right:5px"></i>Due {{ a.due_date.strftime('%d %b %Y') }}</span>
+        <span><i class="fa-solid fa-star" style="margin-right:5px"></i>{{ a.max_marks }} marks</span>
+      </div>
+      {% if pending > 0 %}
+      <div class="info-box yellow" style="margin-bottom:14px;font-size:12px">
+        <i class="fa-solid fa-clock" style="color:var(--yellow);margin-right:6px"></i>
+        <strong>{{ pending }} submission{{ 's' if pending!=1 }} pending grading</strong>
+      </div>
+      {% endif %}
+      <div style="display:flex;gap:8px">
+        <a href="{{ url_for('view_assignment', id=a.id) }}" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center"><i class="fa-solid fa-eye"></i> View Submissions</a>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ url_for('delete_assignment', id=a.id) }}','Delete Assignment?','All submissions for this assignment will also be deleted.')"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><i class="fa-solid fa-book-bookmark"></i><p>No assignments posted yet. <a href="{{ url_for('add_assignment') }}" class="link">Post your first one →</a></p></div></div>
+{% endif %}
+{% endblock %}
